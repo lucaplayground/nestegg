@@ -1,3 +1,6 @@
+CREATE DATABASE nestegg_data CHARACTER SET utf8;
+USE nestegg_data;
+
 -- Create Users Table
 CREATE TABLE Users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
