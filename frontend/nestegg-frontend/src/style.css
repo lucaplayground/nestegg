@@ -1,0 +1,115 @@
+/* main */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'); /* Import Roboto font */
+
+/* Global Variables */
+:root {
+    --primary-color: #1E3A5F;
+    --primary-200: #4A90E2;
+    --primary-300: #0070D1;
+    --accent-color: #28A745;
+    --accent-200: #DC8F35;
+    --text-color: #333;
+    --text-200: #F8F5EF;
+    --bg-200: #F0F4F8;
+    --bg-300: #E1E8ED;
+    --bg-light: rgba(255, 255, 255, 0.8);
+    --bg-dark: rgba(50, 50, 50, 0.8);
+    --box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Global Styles */
+body {
+    font-family: 'Roboto', sans-serif !important;
+    background-color: #fff;
+    color: var(--text-color);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans-serif;
+}
+h3 {
+    padding: 10px 0;
+}
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+/* Navbar */
+.navbar {
+    z-index: 1000;
+}
+
+.navbar-brand img {
+    margin: 0 30px;
+}
+
+.navbar-brand span {
+    margin: 0 20px;
+}
+
+.navbar-nav {
+    margin: auto 0;
+}
+
+.nav-link {
+    margin: 0 20px;
+    border: 2px solid transparent;
+}
+
+.nav-link:hover {
+    border: 2px solid var(--primary-color);
+    border-radius: 5px;
+}
+
+.login-box {
+    position: absolute;
+    z-index: 1;
+    padding: 30px;
+    left: 30%;
+    top: 40%;
+    transform: translate(-50%, -30%);
+}
+
+/* Buttons */
+.btn {
+    padding: 0.3vw 2vw;
+    margin: 1vw 0.7vw;
+    width: 150px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--primary-color);
+    --bs-btn-border-color: var(--primary-color);
+    --bs-btn-hover-bg: var(--primary-300);
+    --bs-btn-hover-border-color: var(--primary-300);
+    color: #fff;
+}
+
+.btn-secondary {
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--primary-color);
+    --bs-btn-hover-bg: var(--accent-color);
+    --bs-btn-hover-border-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+button:disabled {
+    background-color: var(--text-200);
+    cursor: not-allowed;
+}
