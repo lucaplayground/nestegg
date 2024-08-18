@@ -42,40 +42,44 @@ a {
     color: var(--primary-color);
 }
 
+.fas {
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
 /* Navbar */
 .navbar {
-    z-index: 1000;
     background-color: var(--primary-color);
 }
 
-.navbar-brand img {
-    margin: 0 30px;
+.navbar .nav-link {
+    color: var(--text-200);
+}
+
+.navbar .nav-link:hover {
+    color: var(--accent-200); 
 }
 
 .navbar-brand span {
-    margin: 0 20px;
+    color: var(--text-200);
 }
+
+.navbar-brand img {
+    margin: 0 20px 0 40px;
+}
+
+/* .navbar-brand span {
+    margin: 0 20px;
+} */
 
 .navbar-nav {
     margin: auto 0;
 }
 
 .nav-link {
-    margin: 0 20px;
+    margin: 0 40px;
     border: 2px solid transparent;
-}
-
-.nav-link:hover {
-    border: 2px solid var(--primary-color);
-    border-radius: 5px;
-}
-
-.login-box {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 100%;
-    width: auto;
+    color: var(--text-200);
 }
 
 /* Buttons */
@@ -116,3 +120,72 @@ button:disabled {
     background-color: var(--text-200);
     cursor: not-allowed;
 }
+
+/* Boxes */
+.box {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--bg-light);
+    box-shadow: var(--box-shadow);
+    border: none;
+    border-radius: 5px;
+    margin: 10px;
+}
+
+.login-box {
+    position: absolute;
+    z-index: 1;
+    padding: 30px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* .login-bg {
+    background-image: url('../media/login-bg.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 100vh;
+} */
+
+/* Forms */
+.form {
+    padding: 20px;
+}
+
+.form-group {
+    padding: 3px 0;
+}
+
+/* set up the width of the input fields in forms */
+.form-control {
+    max-width: 400px;
+    width: 100%;
+    margin: 0;
+}
+
+.input-box {
+    max-width: 200px;
+    width: 100%;
+    margin: 0;
+}
+
+select#statusFilter, select#typeFilter, select#roleFilter, select#repeatableFilter {
+    background-color: var-(--bg-300);
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+input#searchBox {
+    background-color: var-(--bg-300);
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+input.form-control {
+    background-color: var(--bg-300);
+    border:1px solid rgba(47, 47, 47, 0.4);
+}
+
+/* Pages */

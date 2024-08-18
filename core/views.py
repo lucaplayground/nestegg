@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 # Create your views here.
 def login_view(request):
     if request.method == 'POST':
+        # print("POST data:", request.POST)
         username_or_email = request.POST['username_or_email']
         password = request.POST['password']
 
