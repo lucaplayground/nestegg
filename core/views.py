@@ -2,13 +2,10 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
-def index(request):
-    return HttpResponse("Hello, world.")
-
-
 def login_view(request):
     if request.method == 'POST':
         username_or_email = request.POST['username_or_email']
@@ -32,9 +29,9 @@ def login_view(request):
             login(request, user)
             return redirect('dashboard')
         else:
-            return render(request, 'core/login.html', {'error': 'Invalid credentials'})
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
     else:
-        return render(request, 'core/login.html')
+        return render(request, 'login.html')
 
 
 def logout_view(request):
@@ -42,5 +39,9 @@ def logout_view(request):
     return redirect('login')
 
 
+def about(request):
+    return render(request, 'about.html')
+
+
 def dashboard_view(request):
-    return 'Hello World!'
+    return render(request, 'dashboard.html')
