@@ -1,4 +1,4 @@
-#!/Users/lucapeng/dev/nesteggapp/venv/bin/python3.12
+#!/Users/lucapeng/dev/nestegg/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
