@@ -1,1 +1,2 @@
-NestEgg is a personal financial tracking app.
+# nestegg
+A personal investment tracking platform
