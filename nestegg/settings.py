@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h*c2zkn$uk2k&+diw_59!*s7futn*w(ar#)jl_-j!!3qf2!kpp'
+SECRET_KEY = 'django-insecure-wa72ald56#ms9=)m(bx-6o6pbhu83eb*w&n8k81azze$$!*vqo'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,10 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # my apps
+    'rest_framework',
     'core',
     'analysis',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -55,10 +55,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'nestegg.urls'
 
+# Configure template settings
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'core/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'nestegg.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nestegg_data',
         'USER': 'root',
         'PASSWORD': 'UvMy24NEA456EJ',
@@ -87,6 +88,8 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -122,16 +125,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-# URL to use when referring to static files
 STATIC_URL = '/static/'
-
-# Directory where static files will be collected
-STATICFILES_DIRS = [
-    BASE_DIR / "core" / "static",
-]
-
-# Directory where to collect static files during deployment
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# Configure static files settings
+STATICFILES_DIRS = [BASE_DIR / "static"]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
