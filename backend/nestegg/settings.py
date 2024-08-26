@@ -82,8 +82,12 @@ WSGI_APPLICATION = 'nestegg.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'nestegg_db',
+        'USER': 'nesteggdb',
+        'PASSWORD': 'Rt*U78dSrD%toFdC',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
