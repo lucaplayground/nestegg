@@ -1,10 +1,17 @@
-*.pyc
-__pycache__/
-.env
-venv/
-.DS_Store
-db.sqlite3
-staticfiles/
+# Python-related
+/venv/
+**/__pycache__/
+**/*.pyc
 
-# MySQL specific
-*.sql  # Ignore any SQL dump files
+# Environment files
+backend/.env
+
+# Node-related
+frontend/node_modules/
+frontend/dist/
+
+# Environment files
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
