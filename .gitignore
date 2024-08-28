@@ -1,12 +1,7 @@
 # Python-related
-venv/
+/venv/
 **/__pycache__/
 **/*.pyc
-
-# Django-related
-backend/nestegg/__pycache__/
-backend/accounts/__pycache__/
-backend/investments/__pycache__/
 
 # Environment files
 backend/.env

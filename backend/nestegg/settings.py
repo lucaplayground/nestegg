@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',              # Django REST Framework
+    'rest_framework_simplejwt',    # Django REST Framework Simple JWT
     'corsheaders',                 # CORS headers for cross-origin requests
     'accounts',                    # Custom app for user accounts
     'investments',                 # Custom app for managing investments
