@@ -88,6 +88,9 @@ DATABASES = {
         'PASSWORD': 'Rt*U78dSrD%toFdC',
         'HOST': 'localhost',
         'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        }
     }
 }
 
