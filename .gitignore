@@ -1,17 +1,137 @@
-# Python-related
-/venv/
-**/__pycache__/
-**/*.pyc
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Environment files
-backend/.env
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Node-related
-frontend/node_modules/
-frontend/dist/
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+/media
+/static
 
-# Environment files
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+# If you're using Django staticfiles
+/staticfiles
+/staticfiles/
+
+# Local virtual environment directory
+venv/
+env/
+
+# PyCharm project settings
+.idea/
+
+# VS Code settings
+.vscode/
+
+# Python virtual environment
+pip-log.txt
+pip-delete-this-directory.txt
+venv/
+venv.bak/
+
+# PostgreSQL
+*.pgdata
+*.pgbackup
+
+# macOS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Folder config file
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite3
+*.sqlite
+
+# Media and other uploads
+media/
+media/*
+
+# Environment variables file
+.env
+
+# Production static and media files
+static/
+media/
+
+# Node modules
+node_modules/
+
+# Caches
+*.bak
+*.swp
+*.swo
+
+# Other IDEs
+*.sublime-project
+*.sublime-workspace
+*.idea/
+*.project
+*.pydevproject
+.project
+.metadata
+*.iml
+*.ipr
+*.iws
+
+# Coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Django database migration files
+*.pyc
+__pycache__/
+migrations/
+migrations/*.py
+!migrations/__init__.py
