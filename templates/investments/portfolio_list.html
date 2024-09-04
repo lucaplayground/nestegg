@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolios{% endblock %}
+
+{% block content %}
+<h1>Your Portfolios</h1>
+<ul>
+    {% for portfolio in portfolios %}
+        <li>{{ portfolio.portfolio_name }} (Created: {{ portfolio.created_at }})</li>
+        <ul>
+            {% for asset in portfolio.portfolio_assets.all %}
+                <li>{{ asset.asset.name }}: {{ asset.position }} units, Target: {{ asset.targeted_ratio }}%</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
+{% endblock %}
