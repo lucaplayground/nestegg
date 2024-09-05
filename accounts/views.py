@@ -1,6 +1,6 @@
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.shortcuts import redirect, render
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, CustomUserCreationForm
 
 
 def LoginView(request):
@@ -22,13 +22,13 @@ def LoginView(request):
 
 def RegisterView(request):
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
             return redirect('home')  # Redirect to dashboard after successful registration
     else:
-        form = RegisterForm()
+        form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 
