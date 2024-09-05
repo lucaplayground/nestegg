@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+
 from pathlib import Path
 import environ
 
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # load environment variables
 env = environ.Env()
-environ.Env.read_env()
+environ.Env.read_env(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('DJANGO_SECRET_KEY', default='fallback-secret-key')
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',  # CORS Headers
     'accounts',  # accounts app
     'investments',  # investments app
+    'django_bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -113,6 +115,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# use custom user model
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
