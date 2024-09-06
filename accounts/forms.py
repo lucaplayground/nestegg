@@ -5,11 +5,14 @@ from .models import CustomUser
 
 # Register form
 class CustomUserCreationForm(UserCreationForm):
-    mail = forms.EmailField(required=True)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'email', 'password1', 'password2','default_currency']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['default_currency'].widget = forms.Select(choices=CustomUser.CURRENCY_CHOICES)
 
     def save(self, commit=True):
         user = super().save(commit=False)

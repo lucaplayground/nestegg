@@ -9,8 +9,12 @@
             <h2 class="mt-4 mb-4">Register</h2>
             <form method="post">
                 {% csrf_token %}
-                {% bootstrap_form form %}
-                {% bootstrap_button "Register" button_type="submit" button_class="btn-primary" %}
+                {% bootstrap_field form.username %}
+                {% bootstrap_field form.email %}
+                {% bootstrap_field form.default_currency %}
+                {% bootstrap_field form.password1 %}
+                {% bootstrap_field form.password2 %}
+                <button type="submit" class="btn btn-primary">Register</button>
             </form>
             <p class="mt-3">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
         </div>
