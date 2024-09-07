@@ -14,7 +14,6 @@ def LoginView(request):
             if user is not None:
                 # print(f"User authenticated: {user}")  # Debug print
                 auth_login(request, user)
-                messages.success(request, f"Welcome back, {username}!")
                 return redirect('home')  # Redirect to dashboard
             else:
                 # print("Authentication failed")  # Debug print
@@ -39,3 +38,7 @@ def RegisterView(request):
 def LogoutView(request):
     auth_logout(request)
     return redirect('login')  # Redirect to login page after logout
+
+
+def AboutView(request):
+    return render(request, 'about.html')
