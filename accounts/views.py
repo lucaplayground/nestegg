@@ -1,6 +1,7 @@
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.shortcuts import redirect, render
 from .forms import LoginForm, CustomUserCreationForm
+from django.contrib import messages
 
 
 def LoginView(request):
@@ -11,10 +12,12 @@ def LoginView(request):
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
             if user is not None:
+                # print(f"User authenticated: {user}")  # Debug print
                 auth_login(request, user)
                 return redirect('home')  # Redirect to dashboard
-        else:
-            form.add_error(None, 'Invalid credentials')
+            else:
+                # print("Authentication failed")  # Debug print
+                form.add_error(None, 'Invalid username or password. Please try again.')
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -35,3 +38,7 @@ def RegisterView(request):
 def LogoutView(request):
     auth_logout(request)
     return redirect('login')  # Redirect to login page after logout
+
+
+def AboutView(request):
+    return render(request, 'about.html')
