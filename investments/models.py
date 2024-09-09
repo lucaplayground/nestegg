@@ -33,3 +33,5 @@ class PortfolioAsset(models.Model):
 
     def __str__(self):
         return f"{self.portfolio.name} - {self.asset.name}"
+
+
