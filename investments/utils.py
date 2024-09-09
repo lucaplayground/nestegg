@@ -12,8 +12,8 @@ def update_asset_data(symbol):
         symbol=symbol,
         defaults={
             'name': info.get('longName', 'Unknown'),  # Default to Unknown if not found
-            'asset_type:': info.get('quoteType', 'Unknown')  # Default to Unknown if not found
-            'latest_price': info.get('regularMarketPrice',0),  # Default to 0 if not found
+            'asset_type': info.get('quoteType', 'Unknown'),  # Default to Unknown if not found
+            'latest_price': info.get('regularMarketPrice', 0),  # Default to 0 if not found
             'currency': info.get('currency', 'Unknown')  # Default to Unknown if not found
         }
     )
