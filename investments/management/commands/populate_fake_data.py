@@ -3,6 +3,7 @@ from investments.models import Portfolio, Asset, PortfolioAsset, PositionHistory
 from django.contrib.auth import get_user_model
 from investments.utils import update_asset_data
 import random
+import time
 
 
 class Command(BaseCommand):
@@ -46,6 +47,8 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Successfully updated asset data for {updated_asset.name} ({updated_asset.symbol})'))
             else:
                 self.stdout.write(self.style.ERROR(f'Failed to update asset data for {symbol}'))
+
+            time.sleep(2)  # Add a delay of 2 seconds between requests    
 
             # Assign assets to portfolios with random positions
             for portfolio in portfolios:
