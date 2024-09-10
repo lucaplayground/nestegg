@@ -35,7 +35,7 @@ class PortfolioAsset(models.Model):
         return f"{self.portfolio.name} - {self.asset.name}"
 
 
-class PostisionHistory(models.Model):
+class PositionHistory(models.Model):
     portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
     timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
     position = models.DecimalField(max_digits=10, decimal_places=2)  # The position at that time
