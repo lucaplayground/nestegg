@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from investments.models import Portfolio, Asset, PortfolioAsset, PositionHistory
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from investments.utils import update_asset_data
 import random
 
@@ -14,7 +14,10 @@ class Command(BaseCommand):
         PositionHistory.objects.all().delete()  # Clear PositionHistory
         Asset.objects.all().delete()  # Clear Asset
         Portfolio.objects.all().delete()  # Clear Portfolio
-        User.objects.all().delete()  # Clear existing users
+        
+        # Clear existing users if exists
+        User = get_user_model()  # get the custom user model
+        User.objects.all().delete()
 
         # Create a test user
         user = User.objects.create_user(username='testuser', password='P@ssword123')
