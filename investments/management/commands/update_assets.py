@@ -4,7 +4,7 @@ from investments.models import Asset
 
 
 class Command(BaseCommand):
-    help = 'Update prices from Yahoo Finance for all existing assets'
+    help = "Update prices from Yahoo Finance for all existing assets"
 
     def handle(self, *args, **options):
         # Fetch all asset symbols from the database
