@@ -16,7 +16,7 @@ class Portfolio(models.Model):
 class Asset(models.Model):
     name = models.CharField(max_length=100)
     symbol = models.CharField(max_length=10)  # e.g., AAPL, GOOGL, etc.
-    asset_type = models.CharField(max_length=50)  # e.g., Stock, Bond, etc.
+    asset_type = models.CharField(max_length=50)  # e.g., Equity, ETF, etc.
     latest_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, default='USD')  # e.g., USD, CNY, JPY, etc.
     last_updated = models.DateTimeField(auto_now=True)  # Track when the asset data was last updated
@@ -35,7 +35,7 @@ class PortfolioAsset(models.Model):
         return f"{self.portfolio.name} - {self.asset.name}"
 
 
-class PostisionHistory(models.Model):
+class PositionHistory(models.Model):
     portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
     timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
     position = models.DecimalField(max_digits=10, decimal_places=2)  # The position at that time
