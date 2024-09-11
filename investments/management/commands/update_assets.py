@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand
-from investments.utils import update_asset_data
+from investments.utils import update_asset
 from investments.models import Asset
 
 
 class Command(BaseCommand):
-    help = "Update prices from Yahoo Finance for all existing assets"
+    help = "Update latest prices from Yfinance for all existing assets"
 
     def handle(self, *args, **options):
         # Fetch all asset symbols from the database
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         
         for asset in assets:
             # Call the function to update asset data
-            updated_asset = update_asset_data(asset.symbol)
+            updated_asset = update_asset(asset.symbol)
             if updated_asset:
                 self.stdout.write(self.style.SUCCESS(f'Successfully updated {updated_asset.name} ({updated_asset.symbol})'))
             else:
