@@ -76,3 +76,27 @@ def add_asset(request, portfolio_id):
 
         return JsonResponse({'success': True})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def update_position(request, portfolio_asset_id):
+    if request.method == 'POST':
+        new_position = request.POST.get('position', 0)
+
+        # Fetch the PortfolioAsset instance
+        portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id)
+
+        # Update the position
+        portfolio_asset.position = new_position
+        portfolio_asset.save()
+
+        # Create a PositionHistory entry
+        PositionHistory.objects.create(
+            portfolio_asset=portfolio_asset,
+            position=new_position,
+            price_at_time=portfolio_asset.asset.latest_price
+        )
+
+        return JsonResponse({'success': True, 'new_position': new_position})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
