@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from investments.models import Portfolio, Asset, PortfolioAsset, PositionHistory
 from django.contrib.auth import get_user_model
-from investments.utils import update_asset_data
+from investments.utils import create_asset
 import random
 import time
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             )
 
             # Update the asset data using the API
-            updated_asset = update_asset_data(symbol)
+            updated_asset = create_asset(symbol)
             if updated_asset:
                 self.stdout.write(self.style.SUCCESS(f'Successfully updated asset data for {updated_asset.name} ({updated_asset.symbol})'))
             else:
