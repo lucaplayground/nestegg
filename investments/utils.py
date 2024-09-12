@@ -25,8 +25,8 @@ def create_asset(symbol):
         asset_type = info.get('quoteType')
         currency = info.get('currency')
 
-        print(name)
-        print(latest_price)
+        # print(name)
+        # print(latest_price)
 
         # Check if any fields are missing
         if not name or not latest_price:

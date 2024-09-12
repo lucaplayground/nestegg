@@ -3,14 +3,14 @@ import yfinance as yf
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
+from .utils import create_asset
 
 
 # Home view
 @login_required
-def HomeView(request):
-    return render(request, 'investments/home.html')
+def DashboardView(request):
+    return render(request, 'investments/dashboard.html')
 
 
 # List all portfolios
@@ -59,22 +59,15 @@ def delete_portfolio(request, portfolio_id):
     return render(request, 'investments/delete_portfolio.html', {'portfolio': portfolio})
 
 
-# List all assets
+# List all assets in a portfolio
 @login_required
-def list_assets(request):
-    assets = Asset.objects.all()  # Fetch all assets
-    return render(request, 'investments/list_assets.html', {'assets': assets})
+def list_portfolio_assets(request, portfolio_id):
+    assets = PortfolioAsset.objects.filter(portfolio_id=portfolio_id)  # Fetch all assets in a portfolio
+    return render(request, 'investments/portfolio_assets.html', {'assets': assets})
 
 
-# Asset detail view
-@login_required
-def asset_detail(request, asset_id):
-    asset = get_object_or_404(Asset, id=asset_id)
-    return render(request, 'investments/asset_detail.html', {'asset': asset})
-
-
-# Function to search for assets
-def search_assets(request):
+# Function to search for an asset
+def search_asset(request):
     query = request.GET.get('query','')
     if query:
         # Fetch data from Yahoo Finance
@@ -101,22 +94,13 @@ def add_asset(request, portfolio_id):
         symbol = request.POST.get('symbol')
         position = request.POST.get('position', 0)
 
-        # Fetch the asset
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-        asset, created = Asset.objects.update_or_create(
-            symbol=symbol,
-            defaults={
-                'name': info.get('longName', 'Unknown'),
-                'asset_type': info.get('quoteType', 'Unknown'),
-                'latest_price': info.get('regularMarketPrice', 0),
-                'currency': info.get('currency', 'Unknown'),
-                'last_updated': timezone.now()
-            }
-        )
+        # Call the create_asest function from utils.py
+        asset = create_asset(symbol)
+        if not asset:
+            return JsonResponse({'error': 'Failed to fetch asset data'}, status=400)
 
         # Add to PortfolioAsset
-        portfolio = get_object_or_404(Portfolio, id=portfolio_id)
+        portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
         portfolio_asset = PortfolioAsset.objects.create(
             portfolio=portfolio,
             asset=asset,
@@ -141,7 +125,7 @@ def update_position(request, portfolio_asset_id):
         new_position = request.POST.get('position', 0)
 
         # Fetch the PortfolioAsset instance
-        portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id)
+        portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id, portfolio_user=request.user)
 
         # Update the position
         portfolio_asset.position = new_position
@@ -161,9 +145,9 @@ def update_position(request, portfolio_asset_id):
 
 # Funciton to delete an asset
 @login_required
-def delete_asset(request, asset_id):
-    asset = get_object_or_404(Asset, id=asset_id)
+def delete_portfolio_asset(request, portfolio_asset_id):
+    portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id, portfolio_user=request.user)
     if request.method == 'POST':
-        asset.delete()
+        portfolio_asset.delete()
         return JsonResponse({'success': True})
-    return render(request, 'investments/delete_asset.html', {'asset': asset})
+    return render(request, 'investments/delete_portfolio_asset.html', {'portfolio_asset': portfolio_asset})
