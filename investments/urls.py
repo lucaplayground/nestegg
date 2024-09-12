@@ -2,7 +2,7 @@ from django.urls import path
 from .views import DashboardView, list_portfolios, add_portfolio, portfolio_detail, update_portfolio, delete_portfolio, list_portfolio_assets, search_asset, add_asset, update_asset_position, delete_portfolio_asset
 
 urlpatterns = [
-    path('dashborad/', DashboardView, name='dashboard'),
+    path('dashboard/', DashboardView, name='dashboard'),
     path('portfolios/', list_portfolios, name='list_portfolios'),
     path('add_portfolio/', add_portfolio, name='add_portfolio'),
     path('portfolios/<int:portfolio_id>/', portfolio_detail, name='portfolio_detail'),

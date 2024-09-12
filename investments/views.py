@@ -120,7 +120,7 @@ def add_asset(request, portfolio_id):
 
 # Function to update the position of an asset
 @login_required
-def update_position(request, portfolio_asset_id):
+def update_asset_position(request, portfolio_asset_id):
     if request.method == 'POST':
         new_position = request.POST.get('position', 0)
 

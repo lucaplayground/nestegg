@@ -14,7 +14,7 @@ def LoginView(request):
             if user is not None:
                 # print(f"User authenticated: {user}")  # Debug print
                 auth_login(request, user)
-                return redirect('home')  # Redirect to dashboard
+                return redirect('dashboard')  # Redirect to dashboard
             else:
                 # print("Authentication failed")  # Debug print
                 form.add_error(None, 'Invalid username or password. Please try again.')
@@ -29,7 +29,7 @@ def RegisterView(request):
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
-            return redirect('home')  # Redirect to dashboard after successful registration
+            return redirect('dashboard')  # Redirect to dashboard after successful registration
     else:
         form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
