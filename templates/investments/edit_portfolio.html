@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load django_bootstrap5 %}
 
-{% block title %}Add New Portfolio{% endblock %}
+{% block title %}Edit Portfolio{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-6 offset-md-3">
-        <h2 class="mb-4">Add New Portfolio</h2>
+        <h2 class="mb-4">Edit Portfolio: {{ portfolio.name }}</h2>
         <form method="post">
             {% csrf_token %}
             {% bootstrap_form form %}
-            <button type="submit" class="btn btn-primary">Create Portfolio</button>
+            <button type="submit" class="btn btn-primary">Update Portfolio</button>
             <a href="{% url 'list_portfolios' %}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
