@@ -3,8 +3,10 @@ import yfinance as yf
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.contrib import messages
 from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
 from .utils import create_asset
+from .forms import PortfolioForm
 
 
 # Home view
@@ -24,11 +26,16 @@ def list_portfolios(request):
 @login_required
 def add_portfolio(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        if name:
-            Portfolio.objects.create(user=request.user, name=name)
-            return redirect('portfolio')  # Redirect to the portfolio list page
-    return render(request, 'investments/add_portfolio.html')
+        form = PortfolioForm(request.POST)
+        if form.is_valid():
+            portfolio = form.save(commit=False)
+            portfolio.user = request.user
+            portfolio.save()
+            messages.success(request, 'Portfolio created successfully.')
+            return redirect('list_portfolios')
+    else:
+        form = PortfolioForm()
+    return render(request, 'investments/add_portfolio.html', {'form': form})
 
 
 # Portfolio detail view
@@ -40,13 +47,17 @@ def portfolio_detail(request, portfolio_id):
 
 # Function to update a portfolio
 @login_required
-def update_portfolio(request, portfolio_id):
+def edit_portfolio(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
     if request.method == 'POST':
-        portfolio.name = request.POST.get('name', portfolio.name)
-        portfolio.save()
-        return redirect('portfolio_detail', portfolio_id=portfolio.id)  # Redirect to the portfolio detail page
-    return render(request, 'investments/update_portfolio.html', {'portfolio': portfolio})
+        form = PortfolioForm(request.POST, instance=portfolio)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Portfolio updated successfully.')
+            return redirect('list_portfolios')
+    else:
+        form = PortfolioForm(instance=portfolio)
+    return render(request, 'investments/edit_portfolio.html', {'form': form, 'portfolio': portfolio})
 
 
 # Function to delete a portfolio
