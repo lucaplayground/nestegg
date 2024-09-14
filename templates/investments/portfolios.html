@@ -17,6 +17,7 @@
                             <div>
                                 <h5 class="mb-1">{{ portfolio.name }}</h5>
                                 <p class="mb-1">{{ portfolio.portfolio_assets.count }} assets</p>
+                                <p class="mb-1">Total Value: {{ portfolio.total_value|floatformat:2 }} {{ portfolio.get_currency_display }}</p>
                                 <small>Created: {{ portfolio.created_at|date:"M d, Y" }} | Last updated: {{ portfolio.updated_at|date:"M d, Y H:i" }}</small>
                             </div>
                             <div class="btn-group" role="group">
