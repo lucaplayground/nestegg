@@ -2,6 +2,8 @@ import yfinance as yf
 import logging
 from .models import Asset
 from django.utils import timezone
+import requests
+from decimal import Decimal
 
 
 # Set up logging
@@ -83,3 +85,27 @@ def update_asset(symbol):
     except Exception as e:
         logger.error(f"Error updating asset data for {symbol}: {e}")
         return None
+    
+
+def get_exchange_rate(from_currency, to_currency):
+    """Fetch the exchange rate for the two currencies"""
+    try:
+        response = requests.get(f"https://v6.exchangerate-api.com/v6/1ce094a26ea0970bcc613c49/latest/{from_currency}")
+        data = response.json()
+        if data['result'] == 'success':
+            return Decimal(str(data['conversion_rates'][to_currency]))
+
+    except Exception as e:
+        logger.error(f"Error fetching exchange rate for {from_currency} to {to_currency}: {e}")
+        return None
+    
+
+def convert_currency(amount, from_currency, to_currency):
+    """Convert the amount from one currency to another using the exchange rate"""
+    if from_currency == to_currency:
+        return Decimal(amount)
+    exchange_rate = get_exchange_rate(from_currency, to_currency)
+    if exchange_rate is None:
+        return None
+    converted_amount = Decimal(amount)*exchange_rate
+    return converted_amount
