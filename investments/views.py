@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
-from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
+from .models import Asset, Portfolio, PortfolioAsset, PositionHistory, Portfolio
 from .utils import create_asset
 from .forms import PortfolioForm
 
@@ -18,7 +18,10 @@ def DashboardView(request):
 # List all portfolios
 @login_required
 def list_portfolios(request):
-    portfolios = Portfolio.objects.filter(user=request.user)  # Fetch portfolios for the logged-in user
+    portfolios = Portfolio.objects.filter(user=request.user).prefetch_related('portfolio_assets__asset')
+    for portfolio in portfolios:
+        portfolio.total_value = portfolio.get_total_value()
+        portfolio.latest_update = portfolio.get_latest_update()
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
 
