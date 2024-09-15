@@ -77,7 +77,7 @@ def list_portfolio_assets(request, portfolio_id):
     assets = PortfolioAsset.objects.filter(portfolio_id=portfolio_id)  # Fetch all assets in a portfolio
     return render(request, 'investments/portfolio_assets.html', {'assets': assets})
 
-
+ 
 # Asset detail view
 @login_required
 def asset_detail(request, asset_id):
@@ -131,7 +131,6 @@ def add_asset(request, portfolio_id):
                 position=position,
                 price_at_time=portfolio_asset.asset.latest_price
             )
-
         return JsonResponse({'success': True})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

@@ -17,7 +17,7 @@ class CustomUser(AbstractUser):
         max_length=3,
         choices=CURRENCY_CHOICES,
         default='USD',
-        help_text="Currency used to display the total amount of investments."
+        help_text="Currency used to display the total value of investments."
     )
     
     def __str__(self):

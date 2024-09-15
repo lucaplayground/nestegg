@@ -8,14 +8,30 @@ from decimal import Decimal
 
 # Create your models here.
 class Portfolio(models.Model):
+    CURRENCY_CHOICES = [
+        ('USD', 'US Dollar'),
+        ('CNY', 'Chinese Yuan'),
+        ('NZD', 'New Zealand Dollar'),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='portfolios')
     name = models.CharField(max_length=100)
     currency = models.CharField(max_length=3, choices=SUPPORTED_CURRENCY, default='USD')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
 
     def __str__(self):
         return self.name
+    
+    def get_total_value(self):
+        return self.portfolio_assets.aggregate(
+            total=Sum(F('position')*F('asset__latest_price'))
+        )['total'] or 0
+    
+    def get_latest_update(self):
+        latest_asset = self.portfolio_assets.order_by('-asset__last_updated').first()
+        return latest_asset.asset.last_updated if latest_asset else self.updated_at
 
 
 class Asset(models.Model):
