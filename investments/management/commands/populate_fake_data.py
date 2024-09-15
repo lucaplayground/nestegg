@@ -7,9 +7,10 @@ import time
 
 
 class Command(BaseCommand):
-    help = "Populate the database with fake data for testing"
+    help = "Clear existing data and populate the database with fake data for testing"
 
     def handle(self, *args, **options):
+        self.stdout.write('Clearing existing data...')
         # Clear existing data
         PortfolioAsset.objects.all().delete()  # Clear PortfolioAsset first to avoid foreign key issues
         PositionHistory.objects.all().delete()  # Clear PositionHistory
@@ -20,6 +21,7 @@ class Command(BaseCommand):
         User = get_user_model()  # get the custom user model
         User.objects.all().delete()
 
+        self.stdout.write('Creating new fake data...')
         # Create a test user
         user = User.objects.create_user(username='testuser', password='P@ssword123')
 
