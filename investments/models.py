@@ -17,10 +17,6 @@ class Portfolio(models.Model):
     def __str__(self):
         return self.name
 
-    # def get_latest_update(self):
-    #     latest_asset = self.portfolio_assets.order_by('-asset__updated_at').first()
-    #     return latest_asset.asset.updated_at if latest_asset else self.updated_at
-
 
 class Asset(models.Model):
     name = models.CharField(max_length=100)

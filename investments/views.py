@@ -20,7 +20,6 @@ def list_portfolios(request):
     portfolios = Portfolio.objects.filter(user=request.user).order_by('-created_at').prefetch_related('portfolio_assets__asset')
     for portfolio in portfolios:
         portfolio.total_value = get_portfolio_total_value(portfolio)
-        # portfolio.latest_update = portfolio.get_latest_update()
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
 
