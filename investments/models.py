@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
-from django.db.models import Sum, F
+from .constants import SUPPORTED_CURRENCY
+from decimal import Decimal
+
+# This file includes models and their methods
 
 
 # Create your models here.
@@ -13,6 +16,7 @@ class Portfolio(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='portfolios')
     name = models.CharField(max_length=100)
+    currency = models.CharField(max_length=3, choices=SUPPORTED_CURRENCY, default='USD')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
@@ -36,7 +40,7 @@ class Asset(models.Model):
     asset_type = models.CharField(max_length=50)  # e.g., Equity, ETF, etc.
     latest_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, default='USD')  # e.g., USD, CNY, JPY, etc.
-    last_updated = models.DateTimeField(auto_now=True)  # Track when the asset data was last updated
+    updated_at = models.DateTimeField(auto_now=True)  # Track when the asset data was last updated
 
     def __str__(self):
         return f"{self.name} ({self.symbol})"
@@ -50,6 +54,10 @@ class PortfolioAsset(models.Model):
 
     def __str__(self):
         return f"{self.portfolio.name} - {self.asset.name}"
+    
+    def get_asset_value(self):
+        asset_value = self.asset.latest_price*self.position
+        return Decimal(asset_value)
 
 
 class PositionHistory(models.Model):
