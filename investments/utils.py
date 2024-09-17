@@ -87,7 +87,16 @@ def get_portfolio_total_value(portfolio):
             total_value += converted_value
         else:
             logger.error(f"Error converting currency for asset: {portfolio_asset.asset.name} ({portfolio_asset.asset.symbol})")
-        return total_value
+    return total_value
+
+
+def get_asset_percentage(portfolio_asset):
+    total_value = get_portfolio_total_value(portfolio_asset.portfolio)
+    asset_value = portfolio_asset.get_asset_value()
+    if total_value == 0:
+        return Decimal(0)
+    asset_percentage = (asset_value/total_value)*Decimal(100)
+    return asset_percentage
 
 
 def convert_currency(amount, from_currency, to_currency):
