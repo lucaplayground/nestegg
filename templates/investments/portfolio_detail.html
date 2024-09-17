@@ -1,9 +1,91 @@
 {% extends "base.html" %}
 {% load django_bootstrap5 %}
 
-{% block title %}Portfolio Summary{% endblock %}
+{% block title %}{{ portfolio.name }} - Portfolio Summary{% endblock %}
 
 {% block content %}
-<h2>Portfolio Summary</h2>
+<h2>Portfolio Summary: {{ portfolio.name }}</h2>
+<p>Total Value: {{ total_value|floatformat:2 }} {{ portfolio.currency }}</p>
 
+<div class="mb-3">
+    <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
+</div>
+
+<div class="mb-3">
+    <a href="{% url 'add_asset' portfolio.id %}" class="btn btn-primary">Add</a>
+    <button id="editBtn" class="btn btn-secondary">Edit</button>
+    <button id="deleteBtn" class="btn btn-danger">Delete</button>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="selectAll"></th>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th>Latest Price</th>
+            <th>Market Value</th>
+            <th>Position %</th>
+            <th>Currency</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asset in portfolio_assets %}
+        <tr>
+            <td><input type="checkbox" class="asset-select" data-id="{{ asset.id }}"></td>
+            <td>{{ asset.asset.symbol }}</td>
+            <td>{{ asset.asset.name }}</td>
+            <td>{{ asset.asset.latest_price|floatformat:2 }}</td>
+            <td>{{ asset.market_value|floatformat:2 }}</td>
+            <td>{{ asset.percentage|floatformat:2 }}%</td>
+            <td>{{ asset.asset.currency }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search functionality
+    document.getElementById('assetSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    // Select all checkbox
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        document.querySelectorAll('.asset-select').forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
+    });
+
+    // Edit button functionality
+    document.getElementById('editBtn').addEventListener('click', function() {
+        const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
+        if (selectedAssets.length > 0) {
+            // Implement edit functionality
+            console.log('Edit assets:', selectedAssets);
+        } else {
+            alert('Please select assets to edit');
+        }
+    });
+
+    // Delete button functionality
+    document.getElementById('deleteBtn').addEventListener('click', function() {
+        const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
+        if (selectedAssets.length > 0) {
+            if (confirm('Are you sure you want to delete the selected assets?')) {
+                // Implement delete functionality
+                console.log('Delete assets:', selectedAssets);
+            }
+        } else {
+            alert('Please select assets to delete');
+        }
+    });
+</script>
 {% endblock %}
