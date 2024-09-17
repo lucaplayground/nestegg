@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
-from .utils import get_portfolio_total_value, get_asset_data, create_asset, add_asset_to_portfolio, update_asset_price
+from .utils import get_portfolio_total_value, get_asset_data, create_asset, add_asset_to_portfolio, update_asset_price, get_asset_percentage
 from .forms import PortfolioForm
 
 
@@ -49,7 +49,7 @@ def portfolio_detail(request, portfolio_id):
 
     for asset in portfolio_assets:
         asset.value = asset.get_asset_value()
-        asset.percentage = (asset.market_value / total_value) * 100 if total_value else 0
+        asset.percentage = get_asset_percentage(asset)
     
     context = {
         'portfolio': portfolio,
