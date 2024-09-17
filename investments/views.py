@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
-from .utils import get_portfolio_total_value, get_asset_data, create_asset, add_asset_to_portfolio, update_asset_price
+from .utils import get_portfolio_total_value, get_asset_data, create_asset, add_asset_to_portfolio, update_asset_price, get_asset_percentage
 from .forms import PortfolioForm
 
 
@@ -43,7 +43,21 @@ def add_portfolio(request):
 @login_required
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
-    return render(request, 'investments/portfolio_detail.html', {'portfolio': portfolio})
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
+
+    total_value = get_portfolio_total_value(portfolio)
+
+    for asset in portfolio_assets:
+        asset.value = asset.get_asset_value()
+        asset.percentage = get_asset_percentage(asset)
+    
+    context = {
+        'portfolio': portfolio,
+        'portfolio_assets': portfolio_assets,
+        'total_value': total_value
+    }
+    
+    return render(request, 'investments/portfolio_detail.html', context)
 
 
 # Edit a portfolio

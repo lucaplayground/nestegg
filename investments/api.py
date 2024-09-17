@@ -8,9 +8,6 @@ from decimal import Decimal
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Supported currencies in the system
-# SUPPORTED_CURRENCIES = ['USD', 'CNY', 'NZD']
-
 
 def get_asset_data(symbol):
     """Fetch all data for an asset from YFinance"""
