@@ -47,6 +47,20 @@ def portfolio_detail(request, portfolio_id):
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
     total_value = get_portfolio_total_value(portfolio)
 
+    # Update the asset position
+    if request.method == 'POST':
+        asset_id = request.POST.get('asset_id')
+        new_position = request.POST.get('new_position')
+        if asset_id and new_position:
+            try:
+                asset = portfolio_assets.get(id=asset_id)
+                asset.position = int(new_position)
+                asset.save()
+                return JsonResponse({'success': True})
+            except (ValueError, PortfolioAsset.DoesNotExist):
+                return JsonResponse({'success': False, 'error': 'Invalid input or asset not found'}, status=400)
+    
+    # Fetch and display assets details
     for portfolio_asset in portfolio_assets:
         portfolio_asset.market_value = portfolio_asset.get_asset_value()
         portfolio_asset.asset_ratio = get_asset_ratio(portfolio_asset)
@@ -147,33 +161,6 @@ def add_asset(request, portfolio_id):
                 price_at_time=portfolio_asset.asset.latest_price
             )
         return JsonResponse({'success': True})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
-# Update the position of an asset
-@login_required
-def update_asset_position(request, portfolio_asset_id):
-    if request.method == 'POST':
-        new_position = request.POST.get('position', 0)
-
-        # Fetch the PortfolioAsset instance
-        portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id, portfolio__user=request.user)
-
-        # Update the position
-        portfolio_asset.position = new_position
-        portfolio_asset.save()
-        # Update the latest price for the asset
-        update_asset_price(portfolio_asset.asset)
-
-        # Create a PositionHistory entry
-        PositionHistory.objects.create(
-            portfolio_asset=portfolio_asset,
-            position=new_position,
-            price_at_time=portfolio_asset.asset.latest_price
-        )
-
-        return JsonResponse({'success': True, 'new_position': new_position})
-    
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
