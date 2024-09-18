@@ -22,7 +22,7 @@ def create_asset(symbol):
                     'asset_type': asset_data['asset_type'],
                     'latest_price': asset_data['latest_price'],
                     'currency': asset_data['currency'],
-                    'updated_at': timezone.now()
+                    # 'updated_at': timezone.now()
                 }
             )
 
@@ -81,22 +81,27 @@ def add_asset_to_portfolio(portfolio, symbol, quantity):
 def get_portfolio_total_value(portfolio):
     total_value = Decimal(0)
     for portfolio_asset in portfolio.portfolio_assets.all():
-        asset_value = portfolio_asset.get_asset_value()
-        converted_value = convert_currency(asset_value, portfolio_asset.asset.currency, portfolio_asset.portfolio.currency)
-        if converted_value:
-            total_value += converted_value
+        asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
+        if asset_converted_value:
+            total_value += asset_converted_value
         else:
             logger.error(f"Error converting currency for asset: {portfolio_asset.asset.name} ({portfolio_asset.asset.symbol})")
     return total_value
 
 
-def get_asset_percentage(portfolio_asset):
-    total_value = get_portfolio_total_value(portfolio_asset.portfolio)
+def get_asset_value_in_portfolio_currency(portfolio_asset):
     asset_value = portfolio_asset.get_asset_value()
+    converted_value = convert_currency(asset_value, portfolio_asset.asset.currency, portfolio_asset.portfolio.currency)
+    return converted_value
+
+
+def get_asset_ratio(portfolio_asset):
+    total_value = get_portfolio_total_value(portfolio_asset.portfolio)
+    asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
     if total_value == 0:
         return Decimal(0)
-    asset_percentage = (asset_value/total_value)*Decimal(100)
-    return asset_percentage
+    asset_ratio = (asset_converted_value/total_value)*Decimal(100)
+    return asset_ratio
 
 
 def convert_currency(amount, from_currency, to_currency):

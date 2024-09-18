@@ -23,10 +23,11 @@
             <th><input type="checkbox" id="selectAll"></th>
             <th>Symbol</th>
             <th>Name</th>
+            <th>Position</th>
             <th>Latest Price</th>
             <th>Market Value</th>
-            <th>Position %</th>
             <th>Currency</th>
+            <th>Portfolio Ratio</th>
         </tr>
     </thead>
     <tbody>
@@ -35,10 +36,11 @@
             <td><input type="checkbox" class="asset-select" data-id="{{ asset.id }}"></td>
             <td>{{ asset.asset.symbol }}</td>
             <td>{{ asset.asset.name }}</td>
-            <td>{{ asset.asset.latest_price|floatformat:2 }}</td>
+            <td>{{ asset.position }}</td>
+            <td>{{ asset.asset.latest_price }}</td>
             <td>{{ asset.market_value|floatformat:2 }}</td>
-            <td>{{ asset.percentage|floatformat:2 }}%</td>
             <td>{{ asset.asset.currency }}</td>
+            <td>{{ asset.asset_ratio|floatformat:2 }}%</td>
         </tr>
         {% endfor %}
     </tbody>
