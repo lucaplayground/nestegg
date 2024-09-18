@@ -11,6 +11,5 @@ urlpatterns = [
     path('assets/<int:portfolio_id>/', views.list_portfolio_assets, name='list_portfolio_assets'),
     path('assets/search/', views.search_asset, name='search_asset'),
     path('add_asset/<int:portfolio_id>/', views.add_asset, name='add_asset'),
-    path('assets/update/<int:portfolio_asset_id>/', views.update_asset_position, name='update_asset_position'),
     path('assets/delete/<int:portfolio_id>/', views.delete_portfolio_asset, name='delete_portfolio_asset'),
 ]
