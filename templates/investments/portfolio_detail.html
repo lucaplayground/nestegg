@@ -5,7 +5,7 @@
 
 {% block content %}
 <h2>Portfolio Summary: {{ portfolio.name }}</h2>
-<p>Total Value: {{ total_value|floatformat:2 }} {{ portfolio.currency }}</p>
+<p>Total Value: <span id="totalValue">{{ total_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
 
 <div class="mb-3">
     <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
@@ -14,6 +14,7 @@
 <div class="mb-3">
     <a href="{% url 'add_asset' portfolio.id %}" class="btn btn-primary">Add</a>
     <button id="editBtn" class="btn btn-secondary">Edit</button>
+    <button id="saveBtn" class="btn btn-success" style="display: none;">Save</button>
     <button id="deleteBtn" class="btn btn-danger">Delete</button>
 </div>
 
@@ -32,15 +33,18 @@
     </thead>
     <tbody>
         {% for asset in portfolio_assets %}
-        <tr>
+        <tr data-asset-id="{{ asset.id }}">
             <td><input type="checkbox" class="asset-select" data-id="{{ asset.id }}"></td>
             <td>{{ asset.asset.symbol }}</td>
             <td>{{ asset.asset.name }}</td>
-            <td>{{ asset.position }}</td>
+            <td>
+                <span class="position-value">{{ asset.position }}</span>
+                <input type="number" class="form-control position-input" style="display: none;" value="{{ asset.position }}" min="1">
+            </td>
             <td>{{ asset.asset.latest_price }}</td>
-            <td>{{ asset.market_value|floatformat:2 }}</td>
+            <td class="market-value">{{ asset.market_value|floatformat:2 }}</td>
             <td>{{ asset.asset.currency }}</td>
-            <td>{{ asset.asset_ratio|floatformat:2 }}%</td>
+            <td class="asset-ratio">{{ asset.asset_ratio|floatformat:2 }}%</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -49,14 +53,30 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    // Search functionality
+<script defer>
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const table = document.querySelector('table');
+
+    // Edit button functionality
+    editBtn.addEventListener('click', handleEdit);
+
+    // Save button functionality
+    saveBtn.addEventListener('click', handleSave);
+
+    // Search functionality with debounce
+    let searchTimeout;
     document.getElementById('assetSearch').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }, 300);
     });
 
     // Select all checkbox
@@ -66,19 +86,95 @@
         });
     });
 
-    // Edit button functionality
-    document.getElementById('editBtn').addEventListener('click', function() {
-        const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
+    function handleEdit() {
+        const selectedAssets = document.querySelectorAll('.asset-select:checked');
         if (selectedAssets.length > 0) {
-            // Implement edit functionality
-            console.log('Edit assets:', selectedAssets);
+            selectedAssets.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                row.querySelector('.position-value').style.display = 'none';
+                row.querySelector('.position-input').style.display = 'inline-block';
+            });
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            deleteBtn.disabled = true;
         } else {
             alert('Please select assets to edit');
         }
-    });
+    }
+
+    function handleSave() {
+        const selectedAssets = document.querySelectorAll('.asset-select:checked');
+        const updatedAssets = [];
+
+        selectedAssets.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const assetId = checkbox.dataset.id;
+            const newPosition = row.querySelector('.position-input').value;
+
+            if (newPosition && parseInt(newPosition) > 0) {
+                updatedAssets.push({ id: assetId, position: newPosition });
+            } else {
+                alert('Please enter a valid positive integer for the position.');
+                return;
+            }
+        });
+
+        if (updatedAssets.length === selectedAssets.length) {
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ assets: updatedAssets })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Update total value
+                    document.getElementById('totalValue').textContent = parseFloat(data.total_value).toFixed(2);
+
+                    // Update individual asset values
+                    data.updated_assets.forEach(updatedAsset => {
+                        const row = document.querySelector(`tr[data-asset-id="${updatedAsset.id}"]`);
+                        if (row) {
+                            row.querySelector('.market-value').textContent = parseFloat(updatedAsset.market_value).toFixed(2);
+                            row.querySelector('.asset-ratio').textContent = parseFloat(updatedAsset.asset_ratio).toFixed(2) + '%';
+                        }
+                    });
+
+                    // Reset UI
+                    selectedAssets.forEach(checkbox => {
+                        const row = checkbox.closest('tr');
+                        const newPosition = row.querySelector('.position-input').value;
+                        row.querySelector('.position-value').textContent = newPosition;
+                        row.querySelector('.position-value').style.display = 'inline';
+                        row.querySelector('.position-input').style.display = 'none';
+                        checkbox.checked = false;
+                    });
+                    editBtn.style.display = 'inline-block';
+                    saveBtn.style.display = 'none';
+                    deleteBtn.disabled = false;
+
+                    alert('Positions updated successfully!');
+                } else {
+                    throw new Error(data.error || 'Unknown error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            });
+        }
+    }
 
     // Delete button functionality
-    document.getElementById('deleteBtn').addEventListener('click', function() {
+    deleteBtn.addEventListener('click', function() {
         const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
         if (selectedAssets.length > 0) {
             if (confirm('Are you sure you want to delete the selected assets?')) {
@@ -89,5 +185,6 @@
             alert('Please select assets to delete');
         }
     });
+});
 </script>
 {% endblock %}

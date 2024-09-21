@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+import json
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
-from .utils import get_portfolio_total_value, create_asset, add_asset_to_portfolio, update_asset_price, get_asset_ratio
+from . import utils
 from .forms import PortfolioForm
 from django.db.models import Q
 
@@ -20,7 +22,7 @@ def DashboardView(request):
 def list_portfolios(request):
     portfolios = Portfolio.objects.filter(user=request.user).order_by('-created_at').prefetch_related('portfolio_assets__asset')
     for portfolio in portfolios:
-        portfolio.total_value = get_portfolio_total_value(portfolio)
+        portfolio.total_value = utils.get_portfolio_total_value(portfolio)
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
 
@@ -42,28 +44,37 @@ def add_portfolio(request):
 
 # Portfolio detail view
 @login_required
+@require_http_methods(['GET', 'POST'])
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
-    total_value = get_portfolio_total_value(portfolio)
 
-    # Update the asset position
     if request.method == 'POST':
-        asset_id = request.POST.get('asset_id')
-        new_position = request.POST.get('new_position')
-        if asset_id and new_position:
-            try:
-                asset = portfolio_assets.get(id=asset_id)
-                asset.position = int(new_position)
+        data = json.loads(request.body)
+        assets_to_update = data.get('assets', [])
+
+        try:
+            for asset_data in assets_to_update:
+                asset = portfolio_assets.get(id=asset_data['id'])
+                asset.position = int(asset_data['position'])
                 asset.save()
-                return JsonResponse({'success': True})
-            except (ValueError, PortfolioAsset.DoesNotExist):
-                return JsonResponse({'success': False, 'error': 'Invalid input or asset not found'}, status=400)
+
+            # Update the total value, asset market value, and asset ratios
+            updates = utils.refresh_asset_data(portfolio)
+            return JsonResponse({
+                'success': True,
+                'total_value': updates['total_value'],
+                'updated_assets': updates['assets_updates']
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
+    total_value = utils.get_portfolio_total_value(portfolio)
+
     # Fetch and display assets details
     for portfolio_asset in portfolio_assets:
         portfolio_asset.market_value = portfolio_asset.get_asset_value()
-        portfolio_asset.asset_ratio = get_asset_ratio(portfolio_asset)
+        portfolio_asset.asset_ratio = utils.get_asset_ratio(portfolio_asset)
             
     context = {
         'portfolio': portfolio,
@@ -131,7 +142,7 @@ def search_asset(request):
 
         # If no results found in the database, try to fetch from the API
         if not results:
-            api_asset = create_asset(query)
+            api_asset = utils.create_asset(query)
             if api_asset:
                 results.append({
                     'id': api_asset.symbol,
@@ -151,7 +162,7 @@ def add_asset(request, portfolio_id):
         portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
 
         # Call utility function to add the asset to the porffolio
-        portfolio_asset = add_asset_to_portfolio(portfolio, symbol, position)
+        portfolio_asset = utils.add_asset_to_portfolio(portfolio, symbol, position)
 
         if portfolio_asset:
             # Create a PositionHistory entry

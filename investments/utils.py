@@ -118,12 +118,12 @@ def refresh_asset_data(portfolio):
         asset_ratio = get_asset_ratio(portfolio_asset)
         assets_updates.append({
             'id': portfolio_asset.id,
-            'market_value': market_value,
-            'asset_ratio': asset_ratio
+            'market_value': float(market_value),  # Convert Decimal to float
+            'asset_ratio': float(asset_ratio)  # Convert Decimal to float
         })
     
     return {
-        'total_value': total_value,
+        'total_value': float(total_value),  # Convert Decimal to float
         'assets_updates': assets_updates
     }
 
