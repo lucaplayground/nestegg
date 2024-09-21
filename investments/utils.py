@@ -78,7 +78,15 @@ def add_asset_to_portfolio(portfolio, symbol, quantity):
         return None
 
 
+def get_asset_value_in_portfolio_currency(portfolio_asset):
+    """Convert the asset value to the portfolio currency"""
+    asset_value = portfolio_asset.get_asset_value()
+    converted_value = convert_currency(asset_value, portfolio_asset.asset.currency, portfolio_asset.portfolio.currency)
+    return converted_value
+
+
 def get_portfolio_total_value(portfolio):
+    """Sum up the total value of all assets in the portfolio"""
     total_value = Decimal(0)
     for portfolio_asset in portfolio.portfolio_assets.all():
         asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
@@ -89,19 +97,35 @@ def get_portfolio_total_value(portfolio):
     return total_value
 
 
-def get_asset_value_in_portfolio_currency(portfolio_asset):
-    asset_value = portfolio_asset.get_asset_value()
-    converted_value = convert_currency(asset_value, portfolio_asset.asset.currency, portfolio_asset.portfolio.currency)
-    return converted_value
-
-
 def get_asset_ratio(portfolio_asset):
+    """Calculate the asset ratio in the portfolio"""
     total_value = get_portfolio_total_value(portfolio_asset.portfolio)
     asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
     if total_value == 0:
         return Decimal(0)
     asset_ratio = (asset_converted_value/total_value)*Decimal(100)
     return asset_ratio
+
+
+def refresh_asset_data(portfolio):
+    """Refresh asset values, asset ratios, and total value for the portfolio"""
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
+    total_value = get_portfolio_total_value(portfolio)
+    
+    assets_updates = []
+    for portfolio_asset in portfolio_assets:
+        market_value = portfolio_asset.get_asset_value()
+        asset_ratio = get_asset_ratio(portfolio_asset)
+        assets_updates.append({
+            'id': portfolio_asset.id,
+            'market_value': market_value,
+            'asset_ratio': asset_ratio
+        })
+    
+    return {
+        'total_value': total_value,
+        'assets_updates': assets_updates
+    }
 
 
 def convert_currency(amount, from_currency, to_currency):
