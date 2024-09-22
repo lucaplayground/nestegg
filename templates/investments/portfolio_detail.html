@@ -5,7 +5,7 @@
 
 {% block content %}
 <h2>Portfolio Summary: {{ portfolio.name }}</h2>
-<p>Total Value: <span id="totalValue">{{ total_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
+<p>Portfolio Value: <span id="portfolioValue">{{ portfolio_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
 
 <div class="mb-3">
     <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Update total value
-                    document.getElementById('totalValue').textContent = parseFloat(data.total_value).toFixed(2);
+                    document.getElementById('portfolioValue').textContent = parseFloat(data.portfolio_value).toFixed(2);
 
                     // Update individual asset values
                     data.updated_assets.forEach(updatedAsset => {
@@ -201,7 +201,7 @@ deleteBtn.addEventListener('click', function() {
                         });
 
                         // Update total value
-                        document.getElementById('totalValue').textContent = parseFloat(data.total_value).toFixed(2);
+                        document.getElementById('portfolioValue').textContent = parseFloat(data.portfolio_value).toFixed(2);
 
                         // Update asset ratios
                         data.updated_assets.forEach(updatedAsset => {

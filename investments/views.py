@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from .models import Asset, PortfolioAsset, PositionHistory, Portfolio
+from .models import Asset, PortfolioAsset, Portfolio
 from . import utils
 from .forms import PortfolioForm
 from django.db.models import Q
@@ -22,7 +22,7 @@ def DashboardView(request):
 def list_portfolios(request):
     portfolios = Portfolio.objects.filter(user=request.user).order_by('-created_at').prefetch_related('portfolio_assets__asset')
     for portfolio in portfolios:
-        portfolio.total_value = utils.get_portfolio_total_value(portfolio)
+        portfolio.portfolio_value = utils.get_portfolio_value(portfolio)
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
 
@@ -55,18 +55,16 @@ def portfolio_detail(request, portfolio_id):
 
         try:
             for asset_data in assets_to_update:
-                asset = portfolio_assets.get(id=asset_data['id'])
+                portfolio_asset = portfolio_assets.get(id=asset_data['id'])
                 new_position = int(asset_data['position'])
-                if asset.position != new_position:
-                    asset.position = new_position
-                    asset.save()
-                    utils.create_position_history(asset, new_position)
+                portfolio_asset.position = new_position
+                portfolio_asset.save()
 
-            # Update the total value, asset market value, and asset ratios
+            # Update the portfolio value, asset market value, and asset ratios
             updates = utils.refresh_portfolio_data(portfolio)
             return JsonResponse({
                 'success': True,
-                'total_value': updates['total_value'],
+                'portfolio_value': updates['portfolio_value'],
                 'updated_assets': updates['assets_updates']
             })
         except Exception as e:
@@ -85,14 +83,14 @@ def portfolio_detail(request, portfolio_id):
             return JsonResponse({
                 'success': True,
                 'message': 'Assets deleted successfully',
-                'total_value': updates['total_value'],
+                'portfolio_value': updates['portfolio_value'],
                 'updated_assets': updates['assets_updates']
             })
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
     # GET request
-    total_value = utils.get_portfolio_total_value(portfolio)
+    portfolio_value = utils.get_portfolio_value(portfolio)
 
     # Fetch and display assets details
     for portfolio_asset in portfolio_assets:
@@ -102,7 +100,7 @@ def portfolio_detail(request, portfolio_id):
     context = {
         'portfolio': portfolio,
         'portfolio_assets': portfolio_assets,
-        'total_value': total_value
+        'portfolio_value': portfolio_value
     }
     
     return render(request, 'investments/portfolio_detail.html', context)
@@ -188,20 +186,14 @@ def add_asset(request, portfolio_id):
         portfolio_asset = utils.add_asset_to_portfolio(portfolio, symbol, position)
 
         if portfolio_asset:
-            # Create a PositionHistory entry
-            PositionHistory.objects.create(
-                portfolio_asset=portfolio_asset,
-                position=position,
-                price_at_time=portfolio_asset.asset.latest_price
-            )
-        return JsonResponse({'success': True})
+            return JsonResponse({'success': True})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 # Delete an asset from a portfolio
 @login_required
 def delete_portfolio_asset(request, portfolio_asset_id):
-    portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id, portfolio_user=request.user)
+    portfolio_asset = get_object_or_404(PortfolioAsset, id=portfolio_asset_id, portfolio__user=request.user)
     if request.method == 'POST':
         portfolio_asset.delete()
         return JsonResponse({'success': True})

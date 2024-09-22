@@ -1,8 +1,9 @@
 import logging
 from decimal import Decimal
 from django.utils import timezone
+from datetime import timedelta
 from . import api
-from .models import Portfolio, PortfolioAsset, Asset, PositionHistory
+from .models import Portfolio, PortfolioAsset, Asset, TotalValueHistory
 
 # This file contains general utility functions
 
@@ -85,32 +86,32 @@ def get_asset_value_in_portfolio_currency(portfolio_asset):
     return converted_value
 
 
-def get_portfolio_total_value(portfolio):
-    """Sum up the total value of all assets in the portfolio"""
-    total_value = Decimal(0)
+def get_portfolio_value(portfolio):
+    """Sum up asset values in the portfolio"""
+    portfolio_value = Decimal(0)
     for portfolio_asset in portfolio.portfolio_assets.all():
         asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
         if asset_converted_value:
-            total_value += asset_converted_value
+            portfolio_value += asset_converted_value
         else:
             logger.error(f"Error converting currency for asset: {portfolio_asset.asset.name} ({portfolio_asset.asset.symbol})")
-    return total_value
+    return portfolio_value
 
 
 def get_asset_ratio(portfolio_asset):
     """Calculate the asset ratio in the portfolio"""
-    total_value = get_portfolio_total_value(portfolio_asset.portfolio)
+    portfolio_value = get_portfolio_value(portfolio_asset.portfolio)
     asset_converted_value = get_asset_value_in_portfolio_currency(portfolio_asset)
-    if total_value == 0:
+    if portfolio_value == 0:
         return Decimal(0)
-    asset_ratio = (asset_converted_value/total_value)*Decimal(100)
+    asset_ratio = (asset_converted_value/portfolio_value)*Decimal(100)
     return asset_ratio
 
 
 def refresh_portfolio_data(portfolio):
     """Refresh asset values, asset ratios, and total value for the portfolio"""
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
-    total_value = get_portfolio_total_value(portfolio)
+    portfolio_value = get_portfolio_value(portfolio)
     
     assets_updates = []
     for portfolio_asset in portfolio_assets:
@@ -123,7 +124,7 @@ def refresh_portfolio_data(portfolio):
         })
     
     return {
-        'total_value': float(total_value),  # Convert Decimal to float
+        'portfolio_value': float(portfolio_value),  # Convert Decimal to float
         'assets_updates': assets_updates
     }
 
@@ -139,19 +140,14 @@ def convert_currency(amount, from_currency, to_currency):
     return converted_amount
 
 
-def create_position_history(portfolio_asset, position):
-    """Create a PositionHistory entry for the portfolio asset"""
-    asset = portfolio_asset.asset
-    latest_price = api.get_asset_price(asset.symbol)
-    if latest_price:
-        asset.latest_price = latest_price
-        asset.save()
-    else:
-        latest_price = asset.lateset_price  # Fall back to the existing price if API call fails
-
-    PositionHistory.objects.create(
-        portfolio_asset=portfolio_asset,
-        position=position,
-        price_at_time=latest_price
-    )
-
+def get_total_value(user):
+    """Get the total value of all portfolios for the user in the user's currency"""
+    total_value = Decimal(0)
+    for portfolio in Portfolio.objects.filter(user=user):
+        portfolio_value = get_portfolio_value(portfolio)
+        converted_value = convert_currency(portfolio_value, portfolio.currency, user.default_currency)
+        if converted_value is not None:
+            total_value += converted_value
+        else:
+            logger.error(f"Error converting currency for portfolio: {portfolio.name}")
+    return total_value
