@@ -1,8 +1,8 @@
 import logging
 from decimal import Decimal
 from django.utils import timezone
-from .api import get_asset_data, get_exchange_rate
-from .models import Portfolio, PortfolioAsset, Asset
+from . import api
+from .models import Portfolio, PortfolioAsset, Asset, PositionHistory
 
 # This file contains general utility functions
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def create_asset(symbol):
     """Fetch API data and create an asset in the database"""
     try:
-        asset_data = get_asset_data(symbol)
+        asset_data = api.get_asset_data(symbol)
         if asset_data:
             asset, created = Asset.objects.update_or_create(
                 symbol=symbol,
@@ -35,25 +35,25 @@ def create_asset(symbol):
         return None
 
 
-def update_asset_price(asset):
-    """Update the latest price for the asset"""
-    try:
-        data = get_asset_data(asset.symbol)
-        if data:
-            asset.latest_price = data['latest_price']
-            asset.updated_at = timezone.now()
-            asset.save()
-            logger.info(f"Updated latest price for asset: {asset.name} ({asset.symbol})")
-            return asset
-    except Exception as e:
-        logger.error(f"Error updating asset data for {asset.symbol}: {e}")
-        return None
+# def update_asset_price(asset):
+#     """Update the latest price for the asset"""
+#     try:
+#         data = get_asset_data(asset.symbol)
+#         if data:
+#             asset.latest_price = data['latest_price']
+#             asset.updated_at = timezone.now()
+#             asset.save()
+#             logger.info(f"Updated latest price for asset: {asset.name} ({asset.symbol})")
+#             return asset
+#     except Exception as e:
+#         logger.error(f"Error updating asset data for {asset.symbol}: {e}")
+#         return None
 
 
 def add_asset_to_portfolio(portfolio, symbol, quantity):
     """Add an asset to the portfolio"""
     try:
-        asset_data = get_asset_data(symbol)
+        asset_data = api.get_asset_data(symbol)
         if asset_data:
             asset, _ = Asset.objects.update_or_create(
                 symbol=symbol,
@@ -132,10 +132,26 @@ def convert_currency(amount, from_currency, to_currency):
     """Convert the amount from one currency to another using the exchange rate"""
     if from_currency == to_currency:
         return Decimal(amount)
-    exchange_rate = get_exchange_rate(from_currency, to_currency)
+    exchange_rate = api.get_exchange_rate(from_currency, to_currency)
     if exchange_rate is None:
         return None
     converted_amount = Decimal(amount)*exchange_rate
     return converted_amount
 
+
+def create_position_history(portfolio_asset, position):
+    """Create a PositionHistory entry for the portfolio asset"""
+    asset = portfolio_asset.asset
+    latest_price = api.get_asset_price(asset.symbol)
+    if latest_price:
+        asset.latest_price = latest_price
+        asset.save()
+    else:
+        latest_price = asset.lateset_price  # Fall back to the existing price if API call fails
+
+    PositionHistory.objects.create(
+        portfolio_asset=portfolio_asset,
+        position=position,
+        price_at_time=latest_price
+    )
 
