@@ -20,8 +20,12 @@ def get_asset_data(symbol):
         # print(f"Raw data for {symbol}: {info}")  # Print raw data to debug
 
         # Fetch data from YFinance
-        name = info.get('shortName')
         latest_price = info.get('currentPrice')
+        # If current price is not available, use the previous close price
+        if not latest_price:
+            latest_price = info.get('previousClose')
+        
+        name = info.get('shortName')
         asset_type = info.get('quoteType')
         currency = info.get('currency')
         
