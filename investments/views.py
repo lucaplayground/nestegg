@@ -56,8 +56,11 @@ def portfolio_detail(request, portfolio_id):
         try:
             for asset_data in assets_to_update:
                 asset = portfolio_assets.get(id=asset_data['id'])
-                asset.position = int(asset_data['position'])
-                asset.save()
+                new_position = int(asset_data['position'])
+                if asset.position != new_position:
+                    asset.position = new_position
+                    asset.save()
+                    utils.create_position_history(asset, new_position)
 
             # Update the total value, asset market value, and asset ratios
             updates = utils.refresh_portfolio_data(portfolio)

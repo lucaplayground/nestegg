@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from investments.models import Portfolio, Asset, PortfolioAsset, PositionHistory
 from django.contrib.auth import get_user_model
-from investments.utils import create_asset
+from investments.utils import create_asset, create_position_history
 import random
 import time
 
@@ -61,8 +61,6 @@ class Command(BaseCommand):
                     position=position
                 )
                 # Create a PositionHistory entry
-                portfolio_asset.position_history.create(
-                    position=position,
-                    price_at_time=asset.latest_price
-                )
+                create_position_history(portfolio_asset, position)
+
         self.stdout.write(self.style.SUCCESS('Successfully populated the database with fake data and updated asset prices.'))
