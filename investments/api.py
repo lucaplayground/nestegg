@@ -35,6 +35,19 @@ def get_asset_data(symbol):
     except Exception as e:
         logger.error(f"Error fetching asset data for {symbol}: {e}")
         return None
+    
+
+def get_asset_price(symbol):
+    """Fetch the latest price for an asset from YFinance"""
+    try:
+        ticker = yf.Ticker(symbol)
+        data = ticker.history(period='1d')
+        latest_price = data['Close'].iloc[-1]
+        return Decimal(str(latest_price))
+    
+    except Exception as e:
+        logger.error(f"Error fetching latest price for {symbol}: {e}")
+        return None
 
 
 def get_exchange_rate(from_currency, to_currency):
