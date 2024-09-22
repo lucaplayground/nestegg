@@ -23,5 +23,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.ERROR(f'Failed to update {asset.symbol}'))
 
-        # Add a delay to avoid overwhelming the API
-        time.sleep(1)
+        # Add a delay of 2 seconds between requests
+        time.sleep(2)
+
+        self.stdout.write(self.style.SUCCESS('Finished updating all assets'))
