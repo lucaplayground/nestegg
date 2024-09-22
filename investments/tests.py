@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.db.models import F
 from django.shortcuts import render
+import yfinance as yf
 
 
 # Create your tests here.
-# asset_symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
+# asset_symbols = ['AAPL', '161005.SZ', 'VT', 'FNZ.NZ', 'BIL']
 
 # for symbol in asset_symbols:
 #     ticker = yf.Ticker(symbol)
