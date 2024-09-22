@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, tests
 
 urlpatterns = [
     path('dashboard/', views.DashboardView, name='dashboard'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('assets/search/', views.search_asset, name='search_asset'),
     path('add_asset/<int:portfolio_id>/', views.add_asset, name='add_asset'),
     path('assets/delete/<int:portfolio_id>/', views.delete_portfolio_asset, name='delete_portfolio_asset'),
+    path('position-history/', tests.position_history, name='position_history'),
 ]

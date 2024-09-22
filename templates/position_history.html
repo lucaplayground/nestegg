@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}Position History{% endblock %}
+
+{% block content %}
+<h2>Position History</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Portfolio</th>
+            <th>Asset</th>
+            <th>Current Position</th>
+            <th>Historical Position</th>
+            <th>Change</th>
+            <th>Price at Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in history %}
+        <tr>
+            <td>{{ entry.timestamp|date:"Y/m/d H:i" }}</td>
+            <td>{{ entry.portfolio_asset.portfolio.name }}</td>
+            <td>{{ entry.portfolio_asset.asset.symbol }}</td>
+            <td>{{ entry.portfolio_asset.position }}</td>
+            <td>{{ entry.position }}</td>
+            <td>
+                {% if entry.position_change > 0 %}
+                    <span class="text-success">+{{ entry.position_change }}</span>
+                {% elif entry.position_change < 0 %}
+                    <span class="text-danger">{{ entry.position_change }}</span>
+                {% else %}
+                    <span class="text-muted">0</span>
+                {% endif %}
+            </td>
+            <td>{{ entry.price_at_time }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No position history available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
