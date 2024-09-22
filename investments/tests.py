@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.db.models import F
-from .models import PositionHistory
 from django.shortcuts import render
 
 
@@ -14,16 +13,16 @@ from django.shortcuts import render
 
 
 # class PositionHistoryTestCase(TestCase):
-def position_history(request):
-    # Get all position history entries, ordered by the most recent first
-    history = PositionHistory.objects.select_related('portfolio_asset__asset', 'portfolio_asset__portfolio').order_by('-timestamp')
+# def position_history(request):
+#     # Get all position history entries, ordered by the most recent first
+#     history = PositionHistory.objects.select_related('portfolio_asset__asset', 'portfolio_asset__portfolio').order_by('-timestamp')
 
-    # Calculate the change in position
-    history = history.annotate(
-        position_change=F('position') - F('portfolio_asset__position')
-    )
+#     # Calculate the change in position
+#     history = history.annotate(
+#         position_change=F('portfolio_asset__position') - F('position')
+#     )
 
-    context = {
-        'history': history
-    }
-    return render(request, 'position_history.html', context)
+#     context = {
+#         'history': history
+#     }
+#     return render(request, 'position_history.html', context)
