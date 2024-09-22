@@ -31,7 +31,7 @@ class Command(BaseCommand):
             portfolios.append(portfolio)
 
         # Create some fake assets
-        asset_symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
+        asset_symbols = ['AAPL', '161005.SZ', 'VT', 'FNZ.NZ', 'BIL']
         for symbol in asset_symbols:
             asset = create_asset(symbol)
             if asset:
