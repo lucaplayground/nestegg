@@ -173,13 +173,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Delete button functionality
-    deleteBtn.addEventListener('click', function() {
+// Delete button functionality
+deleteBtn.addEventListener('click', function() {
         const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
         if (selectedAssets.length > 0) {
-            if (confirm('Are you sure you want to delete the selected assets?')) {
-                // Implement delete functionality
-                console.log('Delete assets:', selectedAssets);
+            if (confirm('Are you sure you want to delete the selected assets from this portfolio?')) {
+                fetch('', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ assets: selectedAssets })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove deleted rows from the table
+                        selectedAssets.forEach(assetId => {
+                            const row = document.querySelector(`tr[data-asset-id="${assetId}"]`);
+                            if (row) row.remove();
+                        });
+
+                        // Update total value
+                        document.getElementById('totalValue').textContent = parseFloat(data.total_value).toFixed(2);
+
+                        // Update asset ratios
+                        data.updated_assets.forEach(updatedAsset => {
+                            const row = document.querySelector(`tr[data-asset-id="${updatedAsset.id}"]`);
+                            if (row) {
+                                row.querySelector('.asset-ratio').textContent = parseFloat(updatedAsset.asset_ratio).toFixed(2) + '%';
+                            }
+                        });
+
+                        alert('Assets deleted successfully!');
+                    } else {
+                        throw new Error(data.error || 'Unknown error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred: ' + error.message);
+                });
             }
         } else {
             alert('Please select assets to delete');
