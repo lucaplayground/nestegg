@@ -47,7 +47,7 @@ class PortfolioAsset(models.Model):
 class PositionHistory(models.Model):
     portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
     timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
-    position = models.DecimalField(max_digits=10, decimal_places=2)  # The position at that time
+    position = models.PositiveIntegerField()  # The position at that time
     price_at_time = models.DecimalField(max_digits=10, decimal_places=2)  # Price of the asset at that time
 
     def __str__(self):
