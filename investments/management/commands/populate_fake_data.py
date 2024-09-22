@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from investments.models import Portfolio, Asset, PortfolioAsset, PositionHistory
+from investments.models import Portfolio, Asset, PortfolioAsset
 from django.contrib.auth import get_user_model
 from investments.utils import create_asset
 import random
@@ -13,7 +13,6 @@ class Command(BaseCommand):
         self.stdout.write('Clearing existing data...')
         # Clear existing data
         PortfolioAsset.objects.all().delete()  # Clear PortfolioAsset first to avoid foreign key issues
-        PositionHistory.objects.all().delete()  # Clear PositionHistory
         Asset.objects.all().delete()  # Clear Asset
         Portfolio.objects.all().delete()  # Clear Portfolio
         
@@ -34,35 +33,22 @@ class Command(BaseCommand):
         # Create some fake assets
         asset_symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
         for symbol in asset_symbols:
-            # Create the asset with predefined data
-            asset = Asset.objects.create(
-                symbol=symbol,
-                name=f'Fake Asset {symbol}',
-                asset_type='Stock',
-                latest_price=random.uniform(100, 1500),  # Random price between 100 and 1500
-                currency='USD'
-            )
-
-            # Update the asset data using the API
-            updated_asset = create_asset(symbol)
-            if updated_asset:
-                self.stdout.write(self.style.SUCCESS(f'Successfully updated asset data for {updated_asset.name} ({updated_asset.symbol})'))
+            asset = create_asset(symbol)
+            if asset:
+                self.stdout.write(self.style.SUCCESS(f'Successfully created/updated asset: {asset.name} ({asset.symbol})'))
             else:
-                self.stdout.write(self.style.ERROR(f'Failed to update asset data for {symbol}'))
+                self.stdout.write(self.style.ERROR(f'Failed to create/update asset for {symbol}'))
 
-            time.sleep(2)  # Add a delay of 2 seconds between requests    
+            if asset:
+                # Assign assets to portfolios with random positions
+                for portfolio in portfolios:
+                    position = random.randint(1, 100)  # Random position between 1 and 100
+                    portfolio_asset = PortfolioAsset.objects.create(
+                        portfolio=portfolio,
+                        asset=asset,
+                        position=position
+                    )
+            
+            time.sleep(2)  # Add a delay of 2 seconds between requests 
 
-            # Assign assets to portfolios with random positions
-            for portfolio in portfolios:
-                position = random.randint(1, 100)  # Random position between 1 and 100
-                portfolio_asset = PortfolioAsset.objects.create(
-                    portfolio=portfolio,
-                    asset=asset,
-                    position=position
-                )
-                # Create a PositionHistory entry
-                portfolio_asset.position_history.create(
-                    position=position,
-                    price_at_time=asset.latest_price
-                )
-        self.stdout.write(self.style.SUCCESS('Successfully populated the database with fake data and updated asset prices.'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully populated the database with fake data and updated asset prices.'))

@@ -44,11 +44,27 @@ class PortfolioAsset(models.Model):
         return Decimal(asset_value)
 
 
-class PositionHistory(models.Model):
-    portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
-    timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
-    position = models.DecimalField(max_digits=10, decimal_places=2)  # The position at that time
-    price_at_time = models.DecimalField(max_digits=10, decimal_places=2)  # Price of the asset at that time
+# class PositionHistory(models.Model):
+#     portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
+#     timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
+#     position = models.PositiveIntegerField()  # The position at that time
+#     price_at_time = models.DecimalField(max_digits=10, decimal_places=2)  # Price of the asset at that time
+
+#     def __str__(self):
+#         return f"{self.portfolio_asset} - {self.timestamp}"
+
+
+class TotalValueHistory(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='total_value_history')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    total_value = models.DecimalField(max_digits=15, decimal_places=2)
+
+    class Meta:
+        ordering = ['-timestamp']
+        # Create an entry once per day
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'timestamp'], name='unique_user_daily_value')
+        ]
 
     def __str__(self):
-        return f"{self.portfolio_asset} - {self.timestamp}"
+        return f"{self.user.username} - {self.timestamp.date()} - {self.total_value}"
