@@ -44,7 +44,7 @@ def add_portfolio(request):
 
 # Portfolio detail view
 @login_required
-@require_http_methods(['GET', 'POST'])
+@require_http_methods(['GET', 'POST', 'DELETE'])
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
@@ -60,7 +60,7 @@ def portfolio_detail(request, portfolio_id):
                 asset.save()
 
             # Update the total value, asset market value, and asset ratios
-            updates = utils.refresh_asset_data(portfolio)
+            updates = utils.refresh_portfolio_data(portfolio)
             return JsonResponse({
                 'success': True,
                 'total_value': updates['total_value'],
@@ -69,6 +69,26 @@ def portfolio_detail(request, portfolio_id):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        assets_to_delete = data.get('assets', [])
+
+        try:
+            PortfolioAsset.objects.filter(portfolio=portfolio, id__in=assets_to_delete).delete()
+
+            # Refresh asset data after deletion
+            updates = utils.refresh_portfolio_data(portfolio)
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Assets deleted successfully',
+                'total_value': updates['total_value'],
+                'updated_assets': updates['assets_updates']
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    # GET request
     total_value = utils.get_portfolio_total_value(portfolio)
 
     # Fetch and display assets details

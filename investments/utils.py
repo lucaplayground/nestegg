@@ -107,7 +107,7 @@ def get_asset_ratio(portfolio_asset):
     return asset_ratio
 
 
-def refresh_asset_data(portfolio):
+def refresh_portfolio_data(portfolio):
     """Refresh asset values, asset ratios, and total value for the portfolio"""
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
     total_value = get_portfolio_total_value(portfolio)
