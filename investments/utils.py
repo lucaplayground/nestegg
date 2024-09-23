@@ -26,7 +26,7 @@ def create_asset(symbol):
                     # 'updated_at': timezone.now()
                 }
             )
-
+        # print(f"{asset.symbol} - {asset.asset_type} - {asset.latest_price}")
         logger.info(f"Updated asset: {asset.name} ({asset.symbol})")
         return asset
 
