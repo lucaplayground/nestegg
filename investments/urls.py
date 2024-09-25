@@ -9,7 +9,7 @@ urlpatterns = [
     path('portfolios/edit/<int:portfolio_id>/', views.edit_portfolio, name='edit_portfolio'),
     path('portfolios/delete/<int:portfolio_id>/', views.delete_portfolio, name='delete_portfolio'),
     path('assets/<int:portfolio_id>/', views.list_portfolio_assets, name='list_portfolio_assets'),
-    path('assets/search/', views.search_asset, name='search_asset'),
+    path('assets/search/', views.search_assets, name='search_assets'),
     path('add_asset/<int:portfolio_id>/', views.add_asset, name='add_asset'),
     path('assets/delete/<int:portfolio_id>/', views.delete_portfolio_asset, name='delete_portfolio_asset'),
 ]

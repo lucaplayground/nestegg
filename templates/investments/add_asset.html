@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}Add Assets to {{ portfolio.name }}{% endblock %}
+
+{% block content %}
+<h2>Add Assets to {{ portfolio.name }}</h2>
+
+<div class="mb-3">
+    <input type="text" id="assetSearch" class="form-control" placeholder="Search for assets...">
+</div>
+
+<div id="searchResults" class="list-group mb-3"></div>
+
+<form id="addAssetForm">
+    {% csrf_token %}
+    <table class="table" id="selectedAssetsTable">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Add Selected Assets</button>
+</form>
+
+<h3 class="mt-4">Existing Assets</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asset in all_assets %}
+        <tr>
+            <td>{{ asset.symbol }}</td>
+            <td>{{ asset.name }}</td>
+            <td>
+                {% if asset.in_portfolio %}
+                <span class="badge bg-secondary">Already in portfolio</span>
+                {% else %}
+                <button class="btn btn-sm btn-outline-primary add-asset-btn" data-symbol="{{ asset.symbol }}" data-name="{{ asset.name }}">Add</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('assetSearch');
+    const searchResults = document.getElementById('searchResults');
+    const addAssetForm = document.getElementById('addAssetForm');
+    const selectedAssetsTable = document.getElementById('selectedAssetsTable').getElementsByTagName('tbody')[0];
+
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const query = this.value.trim();
+            if (query.length > 0) {
+                fetch(`{% url 'search_assets' %}?query=${query}&portfolio_id={{ portfolio.id }}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        data.results.forEach(asset => {
+                            const item = document.createElement('a');
+                            item.href = '#';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.textContent = `${asset.symbol} - ${asset.name}`;
+                            item.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                addAssetToTable(asset.symbol, asset.name);
+                                searchResults.innerHTML = '';
+                                searchInput.value = '';
+                            });
+                            searchResults.appendChild(item);
+                        });
+                    });
+            } else {
+                searchResults.innerHTML = '';
+            }
+        }, 300);
+    });
+
+    function addAssetToTable(symbol, name) {
+        const newRow = selectedAssetsTable.insertRow();
+        newRow.innerHTML = `
+            <td>${symbol}</td>
+            <td>${name}</td>
+            <td><input type="number" name="positions[]" class="form-control" required min="1"></td>
+            <td><button type="button" class="btn btn-sm btn-danger remove-asset">Remove</button></td>
+        `;
+        newRow.querySelector('.remove-asset').addEventListener('click', function() {
+            selectedAssetsTable.removeChild(newRow);
+        });
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'assets[]';
+        hiddenInput.value = symbol;
+        newRow.appendChild(hiddenInput);
+    }
+
+    document.querySelectorAll('.add-asset-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const symbol = this.dataset.symbol;
+            const name = this.dataset.name;
+            addAssetToTable(symbol, name);
+        });
+    });
+
+    addAssetForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Assets added successfully!');
+                window.location.href = "{% url 'portfolio_detail' portfolio.id %}";
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the assets.');
+        });
+    });
+});
+</script>
+{% endblock %}

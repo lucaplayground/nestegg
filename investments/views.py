@@ -7,8 +7,14 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .models import Asset, PortfolioAsset, Portfolio
 from . import utils
+from . import api
 from .forms import PortfolioForm
 from django.db.models import Q
+import logging
+
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 # Dashboard view
@@ -146,48 +152,66 @@ def asset_detail(request, asset_id):
 
 
 # Search for assets
-def search_asset(request):
+@login_required
+def search_assets(request):
     query = request.GET.get('query', '').strip()
+    portfolio_id = request.GET.get('portfolio_id')
+    
     if query:
-        # Search for existing assets in the database
-        assets = Asset.objects.filter(
-            Q(symbol__icontains=query) | Q(name__icontains=query)
-        )[:10]  # Limit to 10 results for performance
-
-        results = [
-            {
-                'id': asset.symbol,
-                'text': f"{asset.symbol} - {asset.name}"
-            } for asset in assets
-        ]
-
-        # If no results found in the database, try to fetch from the API
+        assets = Asset.objects.filter(Q(symbol__icontains=query) | Q(name__icontains=query))
+        
+        if portfolio_id:
+            portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
+            existing_assets = PortfolioAsset.objects.filter(portfolio=portfolio).values_list('asset__symbol', flat=True)
+            assets = assets.exclude(symbol__in=existing_assets)
+        
+        results = [{'symbol': asset.symbol, 'name': asset.name} for asset in assets]
+        
         if not results:
-            api_asset = utils.create_asset(query)
+            # Try to fetch from API if not found in database
+            api_asset = api.get_asset_data(query)
             if api_asset:
-                results.append({
-                    'id': api_asset.symbol,
-                    'text': f"{api_asset.symbol} - {api_asset.name}"
-                })
-
+                results.append({'symbol': api_asset.symbol, 'name': api_asset.name})
+        
         return JsonResponse({'results': results})
+    
     return JsonResponse({'results': []})
 
 
 # Add an asset to a portfolio
 @login_required
 def add_asset(request, portfolio_id):
+    portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
+    
     if request.method == 'POST':
-        symbol = request.POST.get('symbol')
-        position = request.POST.get('position', 0)
-        portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
+        assets_to_add = request.POST.getlist('assets[]')
+        positions = request.POST.getlist('positions[]')
+        
+        added_assets = []
+        for symbol, position in zip(assets_to_add, positions):
+            if not PortfolioAsset.objects.filter(portfolio=portfolio, asset__symbol=symbol).exists():
+                portfolio_asset = utils.add_asset_to_portfolio(portfolio, symbol, position)
+                if portfolio_asset:
+                    added_assets.append(symbol)
+        
+        if added_assets:
+            return JsonResponse({'success': True, 'added_assets': added_assets})
+        else:
+            return JsonResponse({'success': False, 'error': 'No assets were added'})
+    
+    # Get all assets and mark those already in the portfolio
+    all_assets = Asset.objects.all().order_by('symbol')
+    portfolio_asset_symbols = set(PortfolioAsset.objects.filter(portfolio=portfolio).values_list('asset__symbol', flat=True))
+    
+    for asset in all_assets:
+        asset.in_portfolio = asset.symbol in portfolio_asset_symbols
+    
+    context = {
+        'portfolio': portfolio,
+        'all_assets': all_assets,
+    }
 
-        # Call utility function to add the asset to the porffolio
-        portfolio_asset = utils.add_asset_to_portfolio(portfolio, symbol, position)
-
-        if portfolio_asset:
-            return JsonResponse({'success': True})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    return render(request, 'investments/add_asset.html', {'portfolio': portfolio})
 
 
 # Delete an asset from a portfolio
