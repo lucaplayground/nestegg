@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, tests
+from . import views
 
 urlpatterns = [
     path('dashboard/', views.DashboardView, name='dashboard'),
@@ -10,6 +10,6 @@ urlpatterns = [
     path('portfolios/delete/<int:portfolio_id>/', views.delete_portfolio, name='delete_portfolio'),
     path('assets/<int:portfolio_id>/', views.list_portfolio_assets, name='list_portfolio_assets'),
     path('assets/search/', views.search_assets, name='search_assets'),
-    path('add_asset/<int:portfolio_id>/', views.add_asset, name='add_asset'),
+    path('add_assets/<int:portfolio_id>/', views.add_assets, name='add_assets'),
     path('assets/delete/<int:portfolio_id>/', views.delete_portfolio_asset, name='delete_portfolio_asset'),
 ]
