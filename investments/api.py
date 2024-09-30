@@ -10,37 +10,26 @@ from typing import List, Dict
 logger = logging.getLogger(__name__)
 
 
-def get_asset_data(symbol):
-    """Fetch all data for an asset from YFinance"""
+def get_asset_data(symbols: List[str]) -> Dict[str, Dict]:
+    """Fetch data for multiple assets from YFinance in a single call"""
     try:
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
+        tickers = yf.Tickers(' '.join(symbols))
+        result = {}
 
-        # Log the raw info for debugging
-        logger.info(f"Raw data for {symbol}: {info}")
-        # print(f"Raw data for {symbol}: {info}")  # Print raw data to debug
-
-        # Fetch data from YFinance
-        latest_price = info.get('currentPrice')
-        # If current price is not available, use the previous close price
-        if not latest_price:
-            latest_price = info.get('previousClose')
-        
-        name = info.get('shortName')
-        long_name = info.get('longName')
-        asset_type = info.get('quoteType')
-        currency = info.get('currency')
-        
-        return {
-            'name': name,
-            'long_name': long_name,
-            'latest_price': latest_price,
-            'asset_type': asset_type,
-            'currency': currency
-        }
+        for symbol in symbols:
+            info = tickers.tickers[symbol].info
+            latest_price = info.get('currentPrice') or info.get('previousClose')
+            result[symbol] = {
+                'name': info.get('shortName'),
+                'long_name': info.get('longName'),
+                'latest_price': latest_price,
+                'asset_type': info.get('quoteType'),
+                'currency': info.get('currency')
+            }
+        return result
     
     except Exception as e:
-        logger.error(f"Error fetching asset data for {symbol}: {e}")
+        logger.error(f"Error fetching asset data for symbols {symbols}: {e}")
         return None
     
 
