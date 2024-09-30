@@ -9,7 +9,7 @@ from .models import Asset, PortfolioAsset, Portfolio
 from . import utils
 from . import api
 from .forms import PortfolioForm
-from django.db.models import Q
+from django.db.models import Count, Prefetch
 import logging
 
 
@@ -26,9 +26,16 @@ def DashboardView(request):
 # List all portfolios
 @login_required
 def list_portfolios(request):
-    portfolios = Portfolio.objects.filter(user=request.user).order_by('-created_at').prefetch_related('portfolio_assets__asset')
+    portfolios = Portfolio.objects.filter(user=request.user)\
+        .prefetch_related(
+            Prefetch('portfolio_assets', queryset=PortfolioAsset.objects.select_related('asset'))
+        )\
+        .annotate(asset_count=Count('portfolio_assets'))\
+        .order_by('-created_at')
+
     for portfolio in portfolios:
         portfolio.portfolio_value = utils.get_portfolio_value(portfolio)
+
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
 
