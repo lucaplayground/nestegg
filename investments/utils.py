@@ -23,7 +23,8 @@ def create_asset(symbol):
                     'asset_type': data.get('asset_type', 'Unknown'),
                     'latest_price': data.get('latest_price'),
                     'currency': data.get('currency'),
-                    # 'updated_at': timezone.now()
+                    # 'updated_at': timezone.now(),
+                    'exchange': data.get('exchange', 'Unknown'),
                 }
             )
             # print(f"{asset.symbol} - {asset.asset_type} - {asset.latest_price}")
