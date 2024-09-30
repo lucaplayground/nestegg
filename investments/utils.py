@@ -13,21 +13,24 @@ logger = logging.getLogger(__name__)
 def create_asset(symbol):
     """Fetch API data and create an asset in the database"""
     try:
-        asset_data = api.get_asset_data(symbol)
-        if asset_data:
+        asset_data = api.get_asset_data([symbol])
+        if asset_data and symbol in asset_data:
+            data = asset_data[symbol]
             asset, created = Asset.objects.update_or_create(
                 symbol=symbol,
                 defaults={
-                    'name': asset_data['name'],
-                    'asset_type': asset_data['asset_type'],
-                    'latest_price': asset_data['latest_price'],
-                    'currency': asset_data['currency'],
+                    'name': data.get('name') or data.get('long_name', 'Unknown'),
+                    'asset_type': data.get('asset_type', 'Unknown'),
+                    'latest_price': data.get('latest_price'),
+                    'currency': data.get('currency'),
                     # 'updated_at': timezone.now()
                 }
             )
-        # print(f"{asset.symbol} - {asset.asset_type} - {asset.latest_price}")
-        logger.info(f"Updated asset: {asset.name} ({asset.symbol})")
-        return asset
+            # print(f"{asset.symbol} - {asset.asset_type} - {asset.latest_price}")
+            logger.info(f"Updated asset: {asset.name} ({asset.symbol})")
+            return asset
+        else:
+            logger.error(f"No data returned for symbol: {symbol}")
 
     except Exception as e:
         logger.error(f"Error updating asset data for {symbol}: {e}")
@@ -84,7 +87,7 @@ def get_portfolio_value(portfolio):
         else:
             logger.error(f"Error converting currency for asset: {portfolio_asset.asset.name} ({portfolio_asset.asset.symbol})")
     
-    cache.set(cache_key, portfolio_value, 300)  # Cache for 5 minutes
+    cache.set(cache_key, portfolio_value, 5)  # Cache for 5 seconds
     return portfolio_value
 
 
