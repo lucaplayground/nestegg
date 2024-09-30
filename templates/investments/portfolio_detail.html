@@ -4,9 +4,12 @@
 {% block title %}{{ portfolio.name }} - Portfolio Summary{% endblock %}
 
 {% block content %}
+{% load cache %}
+
+{% cache 300 portfolio_summary portfolio.id %}
 <h2>Portfolio Summary: {{ portfolio.name }}</h2>
 <p>Portfolio Value: <span id="portfolioValue">{{ portfolio_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
-
+{% endcache %}
 <div class="mb-3">
     <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
 </div>
