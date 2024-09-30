@@ -4,15 +4,18 @@
 {% block title %}{{ portfolio.name }} - Portfolio Summary{% endblock %}
 
 {% block content %}
+{% load cache %}
+
+{% cache 5 portfolio_summary portfolio.id %}
 <h2>Portfolio Summary: {{ portfolio.name }}</h2>
 <p>Portfolio Value: <span id="portfolioValue">{{ portfolio_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
-
+{% endcache %}
 <div class="mb-3">
     <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
 </div>
 
 <div class="mb-3">
-    <a href="{% url 'add_asset' portfolio.id %}" class="btn btn-primary">Add</a>
+    <a href="{% url 'add_assets' portfolio.id %}" class="btn btn-primary">Add</a>
     <button id="editBtn" class="btn btn-secondary">Edit</button>
     <button id="saveBtn" class="btn btn-success" style="display: none;">Save</button>
     <button id="deleteBtn" class="btn btn-danger">Delete</button>

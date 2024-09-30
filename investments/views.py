@@ -7,8 +7,14 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .models import Asset, PortfolioAsset, Portfolio
 from . import utils
+from . import api
 from .forms import PortfolioForm
 from django.db.models import Q
+import logging
+
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 # Dashboard view
@@ -47,7 +53,7 @@ def add_portfolio(request):
 @require_http_methods(['GET', 'POST', 'DELETE'])
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
-    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset').prefetch_related('portfolio')
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -146,48 +152,108 @@ def asset_detail(request, asset_id):
 
 
 # Search for assets
-def search_asset(request):
-    query = request.GET.get('query', '').strip()
-    if query:
-        # Search for existing assets in the database
-        assets = Asset.objects.filter(
-            Q(symbol__icontains=query) | Q(name__icontains=query)
-        )[:10]  # Limit to 10 results for performance
+@login_required
+def search_assets(request):
+    query = request.GET.get('q', '').strip()
+    portfolio_id = request.GET.get('portfolio_id')
 
-        results = [
-            {
-                'id': asset.symbol,
-                'text': f"{asset.symbol} - {asset.name}"
-            } for asset in assets
-        ]
+    # Return an empty list if the query is too short
+    if len(query) < 3:
+        return JsonResponse({'results': []})
+    
+    try:
+        results = api.search_assets(query)
 
-        # If no results found in the database, try to fetch from the API
+        if portfolio_id:
+            # Get existing assets in the portfolio
+            existing_assets = set(PortfolioAsset.objects.filter(portfolio_id=portfolio_id).values_list('asset__symbol', flat=True))
+            
+            # Mark existing assets in the results
+            for result in results:
+                result['exists_in_portfolio'] = result['symbol'] in existing_assets
+        
         if not results:
-            api_asset = utils.create_asset(query)
-            if api_asset:
-                results.append({
-                    'id': api_asset.symbol,
-                    'text': f"{api_asset.symbol} - {api_asset.name}"
-                })
-
+            results = [{'symbol': 'No results found', 'name': '', 'exists_in_portfolio': False}]
+        
         return JsonResponse({'results': results})
-    return JsonResponse({'results': []})
+    except Exception as e:
+        logger.error(f"Error in search_assets view: {e}")
+        return JsonResponse({'results': [{'symbol': 'Error occurred', 'name': '', 'exists_in_portfolio': False}]}, status=500)
 
 
 # Add an asset to a portfolio
 @login_required
-def add_asset(request, portfolio_id):
-    if request.method == 'POST':
-        symbol = request.POST.get('symbol')
-        position = request.POST.get('position', 0)
-        portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
+@require_http_methods(["GET", "POST"])
+def add_assets(request, portfolio_id):
+    portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
 
-        # Call utility function to add the asset to the porffolio
-        portfolio_asset = utils.add_asset_to_portfolio(portfolio, symbol, position)
+    if request.method == 'GET':
+        return render(request, 'investments/add_assets.html', {'portfolio': portfolio})
 
-        if portfolio_asset:
-            return JsonResponse({'success': True})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    elif request.method == 'POST':
+        try: 
+            data = json.loads(request.body)
+            assets = data.get('assets', [])
+            # print(assets)
+            logger.info(f"Received request to add assets: {assets}")  # Log the request
+
+            added_assets = []
+            existing_assets = []
+
+            for asset_data in assets:
+                symbol = asset_data.get('symbol')
+                quantity = asset_data.get('quantity')
+                
+                if not symbol or not quantity:
+                    continue
+
+                # Check if the asset already exists in the portfolio
+                existing_portfolio_asset = PortfolioAsset.objects.filter(portfolio=portfolio, asset__symbol=symbol).first()
+
+                if existing_portfolio_asset:
+                    existing_assets.append({
+                        'symbol': symbol,
+                        'name': existing_portfolio_asset.asset.name,
+                        'current_quantity': existing_portfolio_asset.position
+                    })
+                    continue
+
+                # Create or update the asset
+                asset = utils.create_asset(symbol)
+                print(asset)
+                if not asset:
+                    logger.warning(f"Failed to create asset for symbol: {symbol}")
+                    continue
+
+                # Add the asset to the portfolio
+                portfolio_asset = PortfolioAsset.objects.create(
+                    portfolio=portfolio,
+                    asset=asset,
+                    position=quantity
+                )
+
+                added_assets.append({
+                    'symbol': symbol,
+                    'name': asset.name,
+                    'quantity': quantity
+                })
+                logger.info(f"Added asset to portfolio: {symbol}")
+
+            logger.info(f"Successfully processed assets. Added: {len(added_assets)}, Already existing: {len(existing_assets)}")
+            return JsonResponse({
+                'success': True, 
+                'message': 'Assets processed successfully',
+                'added_assets': added_assets,
+                'existing_assets': existing_assets
+            })
+        
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in request body")
+            return JsonResponse({'success': False, 'message': 'Invalid JSON in request body'}, status=400)
+        
+        except Exception as e:
+            logger.error(f"Error adding assets to portfolio {portfolio_id}: {e}")
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
 
 # Delete an asset from a portfolio
