@@ -53,7 +53,7 @@ def add_portfolio(request):
 @require_http_methods(['GET', 'POST', 'DELETE'])
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
-    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset').prefetch_related('portfolio')
 
     if request.method == 'POST':
         data = json.loads(request.body)
