@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from . import api
-from .models import Portfolio, PortfolioAsset, Asset
+from .models import Portfolio, PortfolioAsset, Asset, TotalValueHistory
 from django.core.cache import cache
 
 # This file contains general utility functions
@@ -75,6 +75,7 @@ def get_asset_value_in_portfolio_currency(portfolio_asset):
 
 
 def get_portfolio_value(portfolio):
+    """Calculate the total value of the portfolio in the portfolio currency"""
     cache_key = f'portfolio_value_{portfolio.id}'
     cached_value = cache.get(cache_key)
     if cached_value is not None:
@@ -145,3 +146,9 @@ def get_total_value(user):
         else:
             logger.error(f"Error converting currency for portfolio: {portfolio.name}")
     return total_value
+
+
+def update_total_value_history(user):
+    """Update the total value history for the user"""
+    total_value = get_total_value(user)
+    TotalValueHistory.objects.create(user=user, total_value=total_value)
