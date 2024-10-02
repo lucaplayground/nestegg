@@ -23,7 +23,6 @@ def create_asset(symbol):
                     'asset_type': data.get('asset_type', 'Unknown'),
                     'latest_price': data.get('latest_price'),
                     'currency': data.get('currency'),
-                    # 'updated_at': timezone.now(),
                     'timezone_full_name': data.get('timezone_full_name'),
                     'timezone_short_name': data.get('timezone_short_name')
                 }
