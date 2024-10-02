@@ -5,23 +5,105 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from .models import Asset, PortfolioAsset, Portfolio
+from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper, Prefetch, Case, When, Value, CharField
+from django.db.models.functions import TruncDate, Cast
+from .models import Asset, PortfolioAsset, Portfolio, TotalValueHistory
 from . import utils
 from . import api
 from .forms import PortfolioForm
-from django.db.models import Count, Prefetch
 import logging
+from decimal import Decimal
+from datetime import date
+from .constants import TIMEZONE_TO_REGION
 
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
+# Custom JSON encoder to handle Decimal and date
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, date):
+            return obj.isoformat()
+        return super(CustomJSONEncoder, self).default(obj)
+
+
 # Dashboard view
 @login_required
 def DashboardView(request):
-    return render(request, 'investments/dashboard.html')
+    user = request.user
 
+    # Overall portfolio summary
+    total_value = utils.get_total_value(user)
+    portfolio_count = Portfolio.objects.filter(user=user).count()
+
+    # Total value history
+    value_history = TotalValueHistory.objects.filter(user=user)\
+        .order_by('timestamp')\
+        .annotate(date=TruncDate('timestamp'))\
+        .values('date', 'total_value')
+
+    # Geographic Distribution
+    geographic_distribution = PortfolioAsset.objects.filter(portfolio__user=user)\
+        .annotate(
+            region=Case(
+                *[When(asset__timezone_full_name=tz, then=Value(region))
+                  for tz, region in TIMEZONE_TO_REGION.items()],
+                default=Value('Other'),
+                output_field=CharField(),
+            )
+        )\
+        .values('region')\
+        .annotate(total_value=Sum(
+            ExpressionWrapper(
+                Cast('asset__latest_price', FloatField()) * F('position'),
+                output_field=FloatField()
+            )
+        ))\
+        .order_by('-total_value')
+
+    # Passive vs Aggressive ratio
+    asset_types = PortfolioAsset.objects.filter(portfolio__user=user)\
+        .annotate(
+            category=Case(
+                When(asset__asset_type__in=['Stock', 'ETF'], then=Value('Aggressive')),
+                default=Value('Passive'),
+                output_field=CharField(),
+            )
+        )\
+        .values('category')\
+        .annotate(total_value=Sum(
+            ExpressionWrapper(
+                Cast('asset__latest_price', FloatField()) * F('position'),
+                output_field=FloatField()
+            )
+        ))
+
+    # Top 5 assets
+    top_assets = PortfolioAsset.objects.filter(portfolio__user=user)\
+        .values('asset__symbol', 'asset__name')\
+        .annotate(total_value=Sum(
+            ExpressionWrapper(
+                Cast('asset__latest_price', FloatField()) * F('position'),
+                output_field=FloatField()
+            )
+        ))\
+        .order_by('-total_value')[:5]
+
+    context = {
+        'total_value': float(total_value),  # Convert Decimal to float
+        'portfolio_count': portfolio_count,
+        'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),
+        'geographic_distribution': json.dumps(list(geographic_distribution), cls=CustomJSONEncoder),
+        'asset_types': json.dumps(list(asset_types), cls=CustomJSONEncoder),
+        'top_assets': json.dumps(list(top_assets), cls=CustomJSONEncoder),
+    }
+    print("Geographic Distribution:", list(geographic_distribution))
+
+    return render(request, 'investments/dashboard.html', context)
 
 # List all portfolios
 @login_required
@@ -75,11 +157,15 @@ def portfolio_detail(request, portfolio_id):
 
             # Update the portfolio value, asset market value, and asset ratios
             updates = utils.refresh_portfolio_data(portfolio)
+
+            # Update the total value history
+            utils.update_total_value_history(request.user)
             return JsonResponse({
                 'success': True,
                 'portfolio_value': updates['portfolio_value'],
                 'updated_assets': updates['assets_updates']
             })
+        
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
@@ -140,6 +226,9 @@ def delete_portfolio(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
     if request.method == 'POST':
         portfolio.delete()
+        # Update the total value history
+        utils.update_total_value_history(request.user)
+
         return redirect('list_portfolios')  # Redirect to the list of portfolios
     return render(request, 'investments/delete_portfolio.html', {'portfolio': portfolio})
 
@@ -247,6 +336,10 @@ def add_assets(request, portfolio_id):
                 logger.info(f"Added asset to portfolio: {symbol}")
 
             logger.info(f"Successfully processed assets. Added: {len(added_assets)}, Already existing: {len(existing_assets)}")
+
+            # Update the total value history
+            utils.update_total_value_history(request.user)
+
             return JsonResponse({
                 'success': True, 
                 'message': 'Assets processed successfully',
