@@ -6,6 +6,7 @@ import random
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
+from django.utils import timezone
 
 
 class Command(BaseCommand):
