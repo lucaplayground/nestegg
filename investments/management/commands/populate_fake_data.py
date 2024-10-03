@@ -1,9 +1,11 @@
 from django.core.management.base import BaseCommand
-from investments.models import Portfolio, Asset, PortfolioAsset
+from investments.models import Portfolio, Asset, PortfolioAsset, TotalValueHistory
 from django.contrib.auth import get_user_model
-from investments.utils import create_asset
+from investments.utils import create_asset, get_total_value, update_total_value_history
 import random
 import time
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 
 class Command(BaseCommand):
@@ -51,4 +53,19 @@ class Command(BaseCommand):
             
             time.sleep(2)  # Add a delay of 2 seconds between requests 
 
+        # Add total value history for the test user
+        self.stdout.write('Creating total value history...')
+        start_date = datetime.now() - timedelta(days=30)  # Start from 30 days ago
+        for i in range(31):  # Create 31 data points (one for each day)
+            date = start_date + timedelta(days=i)
+            total_value = get_total_value(user)
+            # Convert to float, apply randomness, then convert back to Decimal
+            total_value = Decimal(str(float(total_value) * random.uniform(0.95, 1.05)))
+            TotalValueHistory.objects.create(
+                user=user,
+                timestamp=date,
+                total_value=total_value
+            )
+            self.stdout.write(f'Created total value history for {date.date()}: {total_value}')
+        
         self.stdout.write(self.style.SUCCESS(f'Successfully populated the database with fake data and updated asset prices.'))

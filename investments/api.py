@@ -24,7 +24,9 @@ def get_asset_data(symbols: List[str]) -> Dict[str, Dict]:
                 'long_name': info.get('longName'),
                 'latest_price': latest_price,
                 'asset_type': info.get('quoteType'),
-                'currency': info.get('currency')
+                'currency': info.get('currency'),
+                'timezone_full_name': info.get('timeZoneFullName'),
+                'timezone_short_name': info.get('timeZoneShortName'),
             }
         return result
     

@@ -25,6 +25,8 @@ class Asset(models.Model):
     latest_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, default='USD')  # e.g., USD, CNY, JPY, etc.
     updated_at = models.DateTimeField(auto_now=True)  # Track when the asset data was last updated
+    timezone_full_name = models.CharField(max_length=100, null=True, blank=True)
+    timezone_short_name = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.symbol})"
@@ -42,16 +44,6 @@ class PortfolioAsset(models.Model):
     def get_asset_value(self):
         asset_value = self.asset.latest_price*self.position
         return Decimal(asset_value)
-
-
-# class PositionHistory(models.Model):
-#     portfolio_asset = models.ForeignKey(PortfolioAsset, on_delete=models.CASCADE, related_name='position_history')  # foreign key linking to PortfolioAsset model
-#     timestamp = models.DateTimeField(auto_now_add=True)  # Automatically record when the position was updated
-#     position = models.PositiveIntegerField()  # The position at that time
-#     price_at_time = models.DecimalField(max_digits=10, decimal_places=2)  # Price of the asset at that time
-
-#     def __str__(self):
-#         return f"{self.portfolio_asset} - {self.timestamp}"
 
 
 class TotalValueHistory(models.Model):
