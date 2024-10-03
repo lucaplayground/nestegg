@@ -35,6 +35,10 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <h3 class="card-title">Geographic Distribution</h3>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="geographicChartSwitch">
+                            <label class="form-check-label" for="geographicChartSwitch">Show Values</label>
+                        </div>
                         <canvas id="geographicDistributionChart"></canvas>
                     </div>
                 </div>
@@ -43,6 +47,10 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <h3 class="card-title">Passive vs Aggressive Ratio</h3>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="assetTypeChartSwitch">
+                            <label class="form-check-label" for="assetTypeChartSwitch">Show Values</label>
+                        </div>
                         <canvas id="assetTypeChart"></canvas>
                     </div>
                 </div>
@@ -105,12 +113,35 @@
                 }
             }
         });
-        
+
+        // Function to calculate percentages
+        function calculatePercentages(data) {
+            const total = data.reduce((sum, value) => sum + value, 0);
+            return data.map(value => ((value / total) * 100).toFixed(2));
+        }
+
+        // Function to update chart tooltips
+        function updateChartTooltips(chart, showValues, values, percentages) {
+            chart.options.plugins.tooltip.callbacks.label = function(context) {
+                let label = context.label || '';
+                if (label) {
+                    label += ': ';
+                }
+                if (showValues) {
+                    label += values[context.dataIndex].toFixed(2);
+                } else {
+                    label += percentages[context.dataIndex] + '%';
+                }
+                return label;
+            };
+            chart.update();
+        }
 
         // Geographic Distribution Chart
         var geographicData = JSON.parse('{{ geographic_distribution|safe }}');
         var labels = geographicData.map(item => item.region);
         var values = geographicData.map(item => item.total_value);
+        var percentages = calculatePercentages(values);
 
         var ctx = document.getElementById('geographicDistributionChart').getContext('2d');
         var myPieChart = new Chart(ctx, {
@@ -131,6 +162,18 @@
             options: {
                 responsive: true,
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += percentages[context.dataIndex] + '%';
+                                return label;
+                            }
+                        }
+                    },
                     title: {
                         display: true,
                         text: 'Geographic Distribution of Investments'
@@ -142,21 +185,41 @@
             }
         });
 
+        // Event listener to switch between values and percentages
+        document.getElementById('geographicChartSwitch').addEventListener('change', function(e) {
+            updateChartTooltips(myPieChart, e.target.checked, values, percentages);
+        });
+
         // Asset Type Chart (Passive vs Aggressive)
         var assetTypeCtx = document.getElementById('assetTypeChart').getContext('2d');
         var assetTypeData = {{ asset_types|safe }};
-        new Chart(assetTypeCtx, {
+        var assetTypeValues = assetTypeData.map(item => item.total_value);
+        var assetTypePercentages = calculatePercentages(assetTypeValues);
+
+        var assetTypeChart = new Chart(assetTypeCtx, {
             type: 'pie',
             data: {
                 labels: assetTypeData.map(item => item.category),
                 datasets: [{
-                    data: assetTypeData.map(item => item.total_value),
+                    data: assetTypeValues,
                     backgroundColor: ['#FF6384', '#36A2EB']
                 }]
             },
             options: {
                 responsive: true,
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += assetTypePercentages[context.dataIndex] + '%';
+                                return label;
+                            }
+                        }
+                    },
                     title: {
                         display: true,
                         text: 'Passive vs Aggressive Ratio'
@@ -167,5 +230,11 @@
                 }
             }
         });
+
+        // Event listener to switch between values and percentages
+        document.getElementById('assetTypeChartSwitch').addEventListener('change', function(e) {
+            updateChartTooltips(assetTypeChart, e.target.checked, assetTypeValues, assetTypePercentages);
+        });
+
     </script>
 {% endblock %}
