@@ -100,11 +100,12 @@ def DashboardView(request):
         'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),
         'geographic_distribution': json.dumps(list(geographic_distribution), cls=DjangoJSONEncoder),
         'asset_types': json.dumps(list(asset_types), cls=CustomJSONEncoder),
-        'top_assets': json.dumps(list(top_assets), cls=CustomJSONEncoder),
+        'top_assets': list(top_assets),
     }
     # print("Geographic Distribution:", list(geographic_distribution))
 
     return render(request, 'investments/dashboard.html', context)
+
 
 # List all portfolios
 @login_required
