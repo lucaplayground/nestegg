@@ -1,11 +1,12 @@
 from django.core.management.base import BaseCommand
 from investments.models import Portfolio, Asset, PortfolioAsset, TotalValueHistory
 from django.contrib.auth import get_user_model
-from investments.utils import create_asset, get_total_value, update_total_value_history
+from investments.utils import create_asset, get_total_value
 import random
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -55,12 +56,27 @@ class Command(BaseCommand):
 
         # Add total value history for the test user
         self.stdout.write('Creating total value history...')
-        start_date = datetime.now() - timedelta(days=30)  # Start from 30 days ago
+        end_date = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)  # Today at midnight
+        start_date = end_date - timedelta(days=30)  # Start from 30 days ago
+        
+        # Get all portfolio assets for the user
+        portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user)
+        
+        # Initialise a dictionary to store the simulated prices for each asset
+        asset_prices = {pa.asset.id: pa.asset.latest_price for pa in portfolio_assets}
+        
         for i in range(31):  # Create 31 data points (one for each day)
             date = start_date + timedelta(days=i)
-            total_value = get_total_value(user)
-            # Convert to float, apply randomness, then convert back to Decimal
-            total_value = Decimal(str(float(total_value) * random.uniform(0.95, 1.05)))
+            
+            # Simulate price changes for each asset
+            for asset_id in asset_prices:
+                # Apply a random daily change between -2% and 2%
+                daily_change = random.uniform(0.98, 1.02)
+                asset_prices[asset_id] *= Decimal(daily_change)
+            
+            # Calculate total value based on simulated prices
+            total_value = sum(pa.position * asset_prices[pa.asset.id] for pa in portfolio_assets)
+            
             TotalValueHistory.objects.create(
                 user=user,
                 timestamp=date,

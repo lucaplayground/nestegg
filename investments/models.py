@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from .constants import SUPPORTED_CURRENCY
 from decimal import Decimal
+from django.utils import timezone
 
 # This file includes models and their methods
 
@@ -48,7 +49,7 @@ class PortfolioAsset(models.Model):
 
 class TotalValueHistory(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='total_value_history')
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
     total_value = models.DecimalField(max_digits=15, decimal_places=2)
 
     class Meta:
@@ -60,3 +61,9 @@ class TotalValueHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.timestamp.date()} - {self.total_value}"
+    
+    # Override the save method to set the timestamp if it's not provided
+    def save(self, *args, **kwargs):
+        if not self.id and not self.timestamp:
+            self.timestamp = timezone.now()
+        super().save(*args, **kwargs)
