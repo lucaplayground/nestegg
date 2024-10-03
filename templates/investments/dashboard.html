@@ -4,143 +4,168 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Dashboard</h2>
+    <div class="container mt-4">
+        <h2>Dashboard</h2>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Overall Portfolio Summary</h3>
-                    <p class="card-text">Total Value: {{ total_value|floatformat:2 }} {{ user.default_currency }}</p>
-                    <p class="card-text">Number of Portfolios: {{ portfolio_count }}</p>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Overall Portfolio Summary</h3>
+                        <p class="card-text">Total Value: {{ total_value|floatformat:2 }} {{ user.default_currency }}</p>
+                        <p class="card-text">Number of Portfolios: {{ portfolio_count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Total Value History</h3>
+                        <canvas id="valueHistoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Geographic Distribution</h3>
+                        <canvas id="geographicDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Passive vs Aggressive Ratio</h3>
+                        <canvas id="assetTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Top 5 Assets</h3>
+                        <ul class="list-group">
+                            {% for asset in top_assets %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ asset.asset__symbol }} - {{ asset.asset__name }}
+                                <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Total Value History</h3>
-                    <canvas id="valueHistoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Geographic Distribution</h3>
-                    <canvas id="geographicDistributionChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Passive vs Aggressive Ratio</h3>
-                    <canvas id="assetTypeChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h3 class="card-title">Top 5 Assets</h3>
-                    <ul class="list-group">
-                        {% for asset in top_assets %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{ asset.asset__symbol }} - {{ asset.asset__name }}
-                            <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Total Value History Chart
-    var valueHistoryCtx = document.getElementById('valueHistoryChart').getContext('2d');
-    var valueHistoryData = {{ value_history|safe }};
-    
-    // Parse the date strings into JavaScript Date objects
-    valueHistoryData = valueHistoryData.map(item => ({
-        date: new Date(item.date),
-        total_value: item.total_value
-    }));
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script>
+        // Total Value History Chart
+        var valueHistoryCtx = document.getElementById('valueHistoryChart').getContext('2d');
+        var valueHistoryData = {{ value_history|safe }};
 
-    new Chart(valueHistoryCtx, {
-        type: 'line',
-        data: {
-            labels: valueHistoryData.map(item => item.date.toLocaleDateString()),
-            datasets: [{
-                label: 'Total Value',
-                data: valueHistoryData.map(item => item.total_value),
-                borderColor: '#4BC0C0',
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day'
+        new Chart(valueHistoryCtx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Total Value',
+                    data: valueHistoryData.map(item => ({
+                        x: new Date(item.date),
+                        y: item.total_value
+                    })),
+                    borderColor: '#4BC0C0',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true
                     }
-                },
-                y: {
-                    beginAtZero: true
                 }
             }
-        }
-    });
+        });
+        
 
-    // Geographic Distribution Chart
-    var geographicDistributionCtx = document.getElementById('geographicDistributionChart').getContext('2d');
-    var geographicDistributionData = {{ geographic_distribution|safe }};
-    new Chart(geographicDistributionCtx, {
-        type: 'pie',
-        data: {
-            labels: geographicDistributionData.map(item => item.region),
-            datasets: [{
-                data: geographicDistributionData.map(item => item.total_value),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
-            }]
-        },
-        options: {
-            responsive: true
-        }
-    });
+        // Geographic Distribution Chart
+        var geographicData = JSON.parse('{{ geographic_distribution|safe }}');
+        var labels = geographicData.map(item => item.region);
+        var values = geographicData.map(item => item.total_value);
 
-    // Asset Type Chart (Passive vs Aggressive)
-    var assetTypeCtx = document.getElementById('assetTypeChart').getContext('2d');
-    var assetTypeData = {{ asset_types|safe }};
-    new Chart(assetTypeCtx, {
-        type: 'pie',
-        data: {
-            labels: assetTypeData.map(item => item.category),
-            datasets: [{
-                data: assetTypeData.map(item => item.total_value),
-                backgroundColor: ['#FF6384', '#36A2EB']
-            }]
-        },
-        options: {
-            responsive: true
-        }
-    });
-</script>
+        var ctx = document.getElementById('geographicDistributionChart').getContext('2d');
+        var myPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                    ],
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Geographic Distribution of Investments'
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Asset Type Chart (Passive vs Aggressive)
+        var assetTypeCtx = document.getElementById('assetTypeChart').getContext('2d');
+        var assetTypeData = {{ asset_types|safe }};
+        new Chart(assetTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: assetTypeData.map(item => item.category),
+                datasets: [{
+                    data: assetTypeData.map(item => item.total_value),
+                    backgroundColor: ['#FF6384', '#36A2EB']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Passive vs Aggressive Ratio'
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    </script>
 {% endblock %}
