@@ -15,6 +15,7 @@ import logging
 from decimal import Decimal
 from datetime import date
 from .constants import TIMEZONE_TO_REGION
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 # Set up logging
@@ -97,11 +98,11 @@ def DashboardView(request):
         'total_value': float(total_value),  # Convert Decimal to float
         'portfolio_count': portfolio_count,
         'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),
-        'geographic_distribution': json.dumps(list(geographic_distribution), cls=CustomJSONEncoder),
+        'geographic_distribution': json.dumps(list(geographic_distribution), cls=DjangoJSONEncoder),
         'asset_types': json.dumps(list(asset_types), cls=CustomJSONEncoder),
         'top_assets': json.dumps(list(top_assets), cls=CustomJSONEncoder),
     }
-    print("Geographic Distribution:", list(geographic_distribution))
+    # print("Geographic Distribution:", list(geographic_distribution))
 
     return render(request, 'investments/dashboard.html', context)
 
