@@ -68,6 +68,8 @@
                                 {{ asset.asset__symbol }} - {{ asset.asset__name }}
                                 <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }}</span>
                             </li>
+                            {% empty %}
+                            <li class="list-group-item">No assets found.</li>
                             {% endfor %}
                         </ul>
                     </div>
