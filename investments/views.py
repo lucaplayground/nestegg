@@ -36,6 +36,14 @@ class CustomJSONEncoder(json.JSONEncoder):
 @login_required
 def DashboardView(request):
     user = request.user
+    user_currency = user.default_currency
+
+    # Function to convert value to user's currency
+    def convert_to_user_currency(value, from_currency):
+        if from_currency == user_currency:
+            return value
+        exchange_rate = api.get_exchange_rate(from_currency, user_currency)
+        return value * Decimal(str(exchange_rate))
 
     # Overall portfolio summary
     total_value = utils.get_total_value(user)
