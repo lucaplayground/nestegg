@@ -66,7 +66,7 @@
                             {% for asset in top_assets %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 {{ asset.asset__symbol }} - {{ asset.asset__name }}
-                                <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }} {{ user.default_currency }}</span>
                             </li>
                             {% empty %}
                             <li class="list-group-item">No assets found.</li>
@@ -83,6 +83,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
+        var userCurrency = '{{ user.default_currency }}';
+
         // Total Value History Chart
         var valueHistoryCtx = document.getElementById('valueHistoryChart').getContext('2d');
         var valueHistoryData = {{ value_history|safe }};
@@ -112,6 +114,15 @@
                     y: {
                         beginAtZero: true
                     }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ' + userCurrency;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -130,7 +141,7 @@
                     label += ': ';
                 }
                 if (showValues) {
-                    label += values[context.dataIndex].toFixed(2);
+                    label += values[context.dataIndex].toFixed(2) + ' ' + userCurrency;
                 } else {
                     label += percentages[context.dataIndex] + '%';
                 }
@@ -171,7 +182,11 @@
                                 if (label) {
                                     label += ': ';
                                 }
-                                label += percentages[context.dataIndex] + '%';
+                                if (document.getElementById('geographicChartSwitch').checked) {
+                                    label += values[context.dataIndex].toFixed(2) + ' ' + userCurrency;
+                                } else {
+                                    label += percentages[context.dataIndex] + '%';
+                                }
                                 return label;
                             }
                         }
@@ -189,7 +204,7 @@
 
         // Event listener to switch between values and percentages
         document.getElementById('geographicChartSwitch').addEventListener('change', function(e) {
-            updateChartTooltips(myPieChart, e.target.checked, values, percentages);
+            myPieChart.update();
         });
 
         // Asset Type Chart (Passive vs Aggressive)
