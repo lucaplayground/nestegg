@@ -14,6 +14,7 @@ TIMEZONE_TO_REGION = {
     'Europe/Paris': 'Europe',
     'Asia/Tokyo': 'Japan',
     'Asia/Shanghai': 'China',
+    'Asia/Hong_Kong': 'Hong Kong',
     'Australia/Sydney': 'Australia',
     'Pacific/Auckland': 'New Zealand',
 }
