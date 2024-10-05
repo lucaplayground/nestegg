@@ -148,6 +148,13 @@ def get_total_value(user):
     return total_value
 
 
+def get_asset_value_in_user_currency(portfolio_asset, user):
+    """Convert the asset value to the user's currency"""
+    asset_value = portfolio_asset.get_asset_value()
+    converted_value = convert_currency(asset_value, portfolio_asset.asset.currency, user.default_currency)
+    return converted_value
+
+
 def update_total_value_history(user):
     """Update the total value history for the user"""
     total_value = get_total_value(user)

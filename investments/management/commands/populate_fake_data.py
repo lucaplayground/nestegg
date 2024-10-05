@@ -34,7 +34,7 @@ class Command(BaseCommand):
             portfolios.append(portfolio)
 
         # Create some fake assets
-        asset_symbols = ['AAPL', '161005.SZ', 'VT', 'FNZ.NZ', 'BIL']
+        asset_symbols = ['161005.SZ', '3032.HK', 'FNZ.NZ', 'BIL', 'AAPL']
         for symbol in asset_symbols:
             asset = create_asset(symbol)
             if asset:
@@ -45,7 +45,7 @@ class Command(BaseCommand):
             if asset:
                 # Assign assets to portfolios with random positions
                 for portfolio in portfolios:
-                    position = random.randint(1, 100)  # Random position between 1 and 100
+                    position = random.randint(50, 100)  # Random position between 50 and 100
                     portfolio_asset = PortfolioAsset.objects.create(
                         portfolio=portfolio,
                         asset=asset,

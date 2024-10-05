@@ -1,22 +1,21 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-import json
 from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
 from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper, Prefetch, Case, When, Value, CharField
 from django.db.models.functions import TruncDate, Cast
+from django.core.serializers.json import DjangoJSONEncoder
 from .models import Asset, PortfolioAsset, Portfolio, TotalValueHistory
+from .forms import PortfolioForm
+from .constants import TIMEZONE_TO_REGION
 from . import utils
 from . import api
-from .forms import PortfolioForm
 import logging
+import json
 from decimal import Decimal
 from datetime import date
-from .constants import TIMEZONE_TO_REGION
-from django.core.serializers.json import DjangoJSONEncoder
-
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -36,6 +35,7 @@ class CustomJSONEncoder(json.JSONEncoder):
 @login_required
 def DashboardView(request):
     user = request.user
+    user_currency = user.default_currency
 
     # Overall portfolio summary
     total_value = utils.get_total_value(user)
@@ -48,63 +48,90 @@ def DashboardView(request):
         .values('date', 'total_value')
 
     # Geographic Distribution
-    geographic_distribution = PortfolioAsset.objects.filter(portfolio__user=user)\
-        .annotate(
-            region=Case(
-                *[When(asset__timezone_full_name=tz, then=Value(region))
-                  for tz, region in TIMEZONE_TO_REGION.items()],
-                default=Value('Other'),
-                output_field=CharField(),
-            )
-        )\
-        .values('region')\
-        .annotate(total_value=Sum(
-            ExpressionWrapper(
-                Cast('asset__latest_price', FloatField()) * F('position'),
-                output_field=FloatField()
-            )
-        ))\
-        .order_by('-total_value')
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
+    
+    geographic_distribution = {}
+    for portfolio_asset in portfolio_assets:
+        region = next((region for tz, region in TIMEZONE_TO_REGION.items() 
+                       if portfolio_asset.asset.timezone_full_name == tz), 'Other')
+        
+        if portfolio_asset.asset.currency == user_currency:
+            asset_value = portfolio_asset.get_asset_value()
+        else:
+            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
+
+        if asset_value is not None:
+            geographic_distribution[region] = geographic_distribution.get(region, Decimal(0)) + asset_value
+
+    # Convert to list of dictionaries and sort
+    geographic_distribution = [
+        {'region': region, 'total_value': float(value)}
+        for region, value in geographic_distribution.items()
+    ]
+    geographic_distribution.sort(key=lambda x: x['total_value'], reverse=True)
 
     # Passive vs Aggressive ratio
-    asset_types = PortfolioAsset.objects.filter(portfolio__user=user)\
-        .annotate(
-            category=Case(
-                When(asset__asset_type__in=['Stock', 'ETF'], then=Value('Aggressive')),
-                default=Value('Passive'),
-                output_field=CharField(),
-            )
-        )\
-        .values('category')\
-        .annotate(total_value=Sum(
-            ExpressionWrapper(
-                Cast('asset__latest_price', FloatField()) * F('position'),
-                output_field=FloatField()
-            )
-        ))
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
+    
+    asset_types = {
+        'Aggressive': Decimal(0),
+        'Passive': Decimal(0)
+    }
+
+    for portfolio_asset in portfolio_assets:
+        category = 'Aggressive' if portfolio_asset.asset.asset_type in ['STOCK', 'EQUITY'] else 'Passive'
+        if portfolio_asset.asset.currency == user_currency:
+            asset_value = portfolio_asset.get_asset_value()
+        else:
+            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
+        if asset_value is not None:
+            asset_types[category] += asset_value
+
+    # Convert to list of dictionaries
+    asset_types = [
+        {'category': category, 'total_value': float(value)}
+        for category, value in asset_types.items()
+    ]
 
     # Top 5 assets
-    top_assets = PortfolioAsset.objects.filter(portfolio__user=user)\
-        .values('asset__symbol', 'asset__name')\
-        .annotate(total_value=Sum(
-            ExpressionWrapper(
-                Cast('asset__latest_price', FloatField()) * F('position'),
-                output_field=FloatField()
-            )
-        ))\
-        .order_by('-total_value')[:5]
+    top_assets_dict = {}
+    for portfolio_asset in portfolio_assets:
+        if portfolio_asset.asset.currency == user_currency:
+            asset_value = portfolio_asset.get_asset_value()
+        else:
+            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
+        
+        if asset_value is not None:
+            symbol = portfolio_asset.asset.symbol
+            if symbol not in top_assets_dict:
+                top_assets_dict[symbol] = {
+                    'asset__symbol': symbol,
+                    'asset__name': portfolio_asset.asset.name,
+                    'total_value': Decimal('0')
+                }
+            top_assets_dict[symbol]['total_value'] += asset_value
+
+    # Convert to list, sort, and get top 5
+    top_assets = list(top_assets_dict.values())
+    top_assets.sort(key=lambda x: x['total_value'], reverse=True)
+    top_assets = top_assets[:5]
+
+    # Convert Decimal to float for JSON serialization
+    for asset in top_assets:
+        asset['total_value'] = float(asset['total_value'])
 
     context = {
         'total_value': float(total_value),  # Convert Decimal to float
         'portfolio_count': portfolio_count,
         'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),
         'geographic_distribution': json.dumps(list(geographic_distribution), cls=DjangoJSONEncoder),
-        'asset_types': json.dumps(list(asset_types), cls=CustomJSONEncoder),
-        'top_assets': json.dumps(list(top_assets), cls=CustomJSONEncoder),
+        'asset_types': json.dumps(asset_types, cls=CustomJSONEncoder),
+        'top_assets': top_assets,
     }
     # print("Geographic Distribution:", list(geographic_distribution))
 
     return render(request, 'investments/dashboard.html', context)
+
 
 # List all portfolios
 @login_required

@@ -1,4 +1,4 @@
-asset_symbols = ['AAPL', '161005.SZ', 'VT', 'FNZ.NZ', 'BIL']
+asset_symbols = ['161005.SZ', '3032.HK', 'FNZ.NZ', 'EDV', 'AAPL']
 
 for symbol in asset_symbols:
     ticker = yf.Ticker(symbol)
