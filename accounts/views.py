@@ -6,6 +6,13 @@ from django.contrib import messages
 from .forms import LoginForm, CustomUserCreationForm, UserProfileForm, PasswordChangeForm
 
 
+def HomeView(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    else:
+        return redirect('login')
+
+
 def LoginView(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -16,6 +23,7 @@ def LoginView(request):
             if user is not None:
                 # print(f"User authenticated: {user}")  # Debug print
                 auth_login(request, user)
+                messages.success(request, f'Welcome back, {username}!')
                 return redirect('dashboard')  # Redirect to dashboard
             else:
                 # print("Authentication failed")  # Debug print
