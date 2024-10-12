@@ -121,6 +121,7 @@ def DashboardView(request):
         asset['total_value'] = float(asset['total_value'])
 
     context = {
+        'user_currency': user_currency,
         'total_value': float(total_value),  # Convert Decimal to float
         'portfolio_count': portfolio_count,
         'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),

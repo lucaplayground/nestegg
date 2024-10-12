@@ -153,9 +153,9 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # authentication settings
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'  # redirect to home page after login
-LOGOUT_REDIRECT_URL = '/accounts/login/'  # redirect to login page after logout
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'  # redirect to dashboard page after login
+LOGOUT_REDIRECT_URL = 'login'  # redirect to login page after logout
 
 # update REST framework configuration
 REST_FRAMEWORK = {
