@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Terms and Conditions{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Terms and Conditions</h1>
+    
+    <h2>1. Acceptance of Terms</h2>
+    <p>By accessing and using NestEgg, you agree to be bound by these Terms and Conditions.</p>
+
+    <h2>2. User Responsibilities</h2>
+    <p>You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.</p>
+
+    <h2>3. Privacy Policy</h2>
+    <p>Your use of NestEgg is also governed by our Privacy Policy, which can be found <a href="#">here</a>.</p>
+
+    <h2>4. Financial Advice Disclaimer</h2>
+    <p>NestEgg provides financial information for educational purposes only. We do not provide personalized investment advice.</p>
+
+    <h2>5. Limitation of Liability</h2>
+    <p>NestEgg shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the service.</p>
+
+    <h2>6. Changes to Terms</h2>
+    <p>We reserve the right to modify these terms at any time. Your continued use of NestEgg after changes constitutes acceptance of those changes.</p>
+
+    <h2>7. Governing Law</h2>
+    <p>These Terms and Conditions are governed by and construed in accordance with the laws of [Your Jurisdiction].</p>
+
+    <a href="{% url 'register' %}" class="btn btn-primary mt-4">Back to Registration</a>
+</div>
+{% endblock %}
