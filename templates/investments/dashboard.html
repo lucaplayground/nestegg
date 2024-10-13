@@ -4,79 +4,74 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <h2>Dashboard</h2>
+<div class="dashboard-container">
+    <h2>Dashboard</h2>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Overall Portfolio Summary</h3>
-                        <p class="card-text">Total Value: {{ total_value|floatformat:2 }} {{ user.default_currency }}</p>
-                        <p class="card-text">Number of Portfolios: {{ portfolio_count }}</p>
-                    </div>
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-chart-pie me-2"></i>Overall Portfolio Summary</h3>
+                    <p class="card-text">Total Value: <span class="total-value">{{ total_value|floatformat:2 }} {{ user.default_currency }}</span></p>
+                    <p class="card-text">Number of Portfolios: <span class="portfolio-count">{{ portfolio_count }}</span></p>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Total Value History</h3>
-                        <canvas id="valueHistoryChart"></canvas>
-                    </div>
+        <div class="col-md-6 col-lg-8">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-chart-line me-2"></i>Total Value History</h3>
+                    <canvas id="valueHistoryChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Geographic Distribution</h3>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="geographicChartSwitch">
-                            <label class="form-check-label" for="geographicChartSwitch">Show Values</label>
-                        </div>
-                        <canvas id="geographicDistributionChart"></canvas>
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-globe me-2"></i>Geographic Distribution</h3>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="geographicChartSwitch">
+                        <label class="form-check-label" for="geographicChartSwitch">Show Values</label>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Passive vs Aggressive Ratio</h3>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="assetTypeChartSwitch">
-                            <label class="form-check-label" for="assetTypeChartSwitch">Show Values</label>
-                        </div>
-                        <canvas id="assetTypeChart"></canvas>
-                    </div>
+                    <canvas id="geographicDistributionChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">Top 5 Assets</h3>
-                        <ul class="list-group">
-                            {% for asset in top_assets %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ asset.asset__symbol }} - {{ asset.asset__name }}
-                                <span class="badge bg-primary rounded-pill">{{ asset.total_value|floatformat:2 }} {{ user.default_currency }}</span>
-                            </li>
-                            {% empty %}
-                            <li class="list-group-item">No assets found.</li>
-                            {% endfor %}
-                        </ul>
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-balance-scale me-2"></i>Passive vs Aggressive Ratio</h3>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="assetTypeChartSwitch">
+                        <label class="form-check-label" for="assetTypeChartSwitch">Show Values</label>
                     </div>
+                    <canvas id="assetTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fas fa-star me-2"></i>Top 5 Assets</h3>
+                    <ul class="list-group list-group-flush">
+                        {% for asset in top_assets %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ asset.asset__symbol }} - {{ asset.asset__name }}
+                            <span class="badge rounded-pill">{{ asset.total_value|floatformat:2 }} {{ user.default_currency }}</span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item">No assets found.</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -165,7 +160,7 @@
                     data: values,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(54, 162, 230, 0.8)',
                         'rgba(255, 206, 86, 0.8)',
                         'rgba(75, 192, 192, 0.8)',
                         'rgba(153, 102, 255, 0.8)',
@@ -219,7 +214,7 @@
                 labels: assetTypeData.map(item => item.category),
                 datasets: [{
                     data: assetTypeValues,
-                    backgroundColor: ['#FF6384', '#36A2EB']
+                    backgroundColor: ['#FF6384', '#4A90E2']
                 }]
             },
             options: {
