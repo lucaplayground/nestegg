@@ -3,6 +3,8 @@ from decimal import Decimal
 from . import api
 from .models import Portfolio, PortfolioAsset, Asset, TotalValueHistory
 from django.core.cache import cache
+from django.db import transaction
+from django.utils import timezone
 
 # This file contains general utility functions
 
@@ -104,23 +106,22 @@ def get_asset_ratio(portfolio_asset):
 
 
 def refresh_portfolio_data(portfolio):
-    """Refresh asset values, asset ratios, and total value for the portfolio"""
     portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset')
-    portfolio_value = get_portfolio_value(portfolio)
+    total_value = sum(asset.position * asset.asset.latest_price for asset in portfolio_assets)
     
-    assets_updates = []
-    for portfolio_asset in portfolio_assets:
-        market_value = portfolio_asset.get_asset_value()
-        asset_ratio = get_asset_ratio(portfolio_asset)
-        assets_updates.append({
-            'id': portfolio_asset.id,
-            'market_value': float(market_value),  # Convert Decimal to float
-            'asset_ratio': float(asset_ratio)  # Convert Decimal to float
+    updates = []
+    for asset in portfolio_assets:
+        market_value = asset.position * asset.asset.latest_price
+        asset_ratio = (market_value / total_value) * 100 if total_value else 0
+        updates.append({
+            'id': asset.id,
+            'market_value': float(market_value),
+            'asset_ratio': float(asset_ratio)
         })
     
     return {
-        'portfolio_value': float(portfolio_value),  # Convert Decimal to float
-        'assets_updates': assets_updates
+        'portfolio_value': float(total_value),
+        'assets_updates': updates
     }
 
 
@@ -128,11 +129,15 @@ def convert_currency(amount, from_currency, to_currency):
     """Convert the amount from one currency to another using the exchange rate"""
     if from_currency == to_currency:
         return Decimal(amount)
-    exchange_rate = api.get_exchange_rate(from_currency, to_currency)
+    
+    cache_key = f'exchange_rate_{from_currency}_{to_currency}'
+    exchange_rate = cache.get(cache_key)
+    
     if exchange_rate is None:
-        return None
-    converted_amount = Decimal(amount)*exchange_rate
-    return converted_amount
+        exchange_rate = api.get_exchange_rate(from_currency, to_currency)
+        cache.set(cache_key, exchange_rate, 3600)  # Cache for 1 hour
+
+    return amount * Decimal(str(exchange_rate))
 
 
 def get_total_value(user):
@@ -157,5 +162,19 @@ def get_asset_value_in_user_currency(portfolio_asset, user):
 
 def update_total_value_history(user):
     """Update the total value history for the user"""
-    total_value = get_total_value(user)
-    TotalValueHistory.objects.create(user=user, total_value=total_value)
+    today = timezone.now().date()
+    
+    with transaction.atomic():
+        # Check if an entry already exists for today
+        existing_entry = TotalValueHistory.objects.filter(user=user, timestamp__date=today).first()
+        
+        total_value = get_total_value(user)
+        
+        if existing_entry:
+            # Update the existing entry if the value has changed
+            if existing_entry.total_value != total_value:
+                existing_entry.total_value = total_value
+                existing_entry.save()
+        else:
+            # Create a new entry if one doesn't exist for today
+            TotalValueHistory.objects.create(user=user, total_value=total_value, timestamp=timezone.now())

@@ -2,7 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('dashboard/', views.DashboardView, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('api/value-history/', views.value_history_data, name='value_history_data'),
+    path('api/geographic-distribution/', views.geographic_distribution_data, name='geographic_distribution_data'),
+    path('api/asset-types/', views.asset_types_data, name='asset_types_data'),
     path('portfolios/', views.list_portfolios, name='list_portfolios'),
     path('add_portfolio/', views.add_portfolio, name='add_portfolio'),
     path('portfolios/<int:portfolio_id>/', views.portfolio_detail, name='portfolio_detail'),

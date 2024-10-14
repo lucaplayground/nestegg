@@ -5,66 +5,58 @@
 {% block title %}Portfolios{% endblock %}
 
 {% block content %}
-<div class="portfolios-container">
-    <h2>Your Portfolios</h2>
-    <a href="{% url 'add_portfolio' %}" class="btn btn-primary mb-4">
-        <i class="fas fa-plus-circle me-2"></i>Add New Portfolio
-    </a>
-    
-    {% if portfolios %}
-        <div class="portfolio-list">
-            {% for portfolio in portfolios %}
-                {% cache 5 portfolio_item portfolio.id %}
-                <div class="portfolio-item p-4">
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-2">{{ portfolio.name }}</h5>
-                            <p class="mb-1"><i class="fas fa-chart-pie me-2"></i>{{ portfolio.portfolio_assets.count }} assets</p>
-                            <p class="mb-1">Portfolio Value: <span class="portfolio-value">{{ portfolio.portfolio_value|floatformat:2 }} {{ portfolio.currency }}</span></p>
-                            <small><i class="far fa-calendar-alt me-2"></i>Created: {{ portfolio.created_at|date:"Y/m/d" }} | Last updated: {{ portfolio.updated_at|date:"Y/m/d H:i" }}</small>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <a href="{% url 'portfolio_detail' portfolio.id %}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i>View
-                            </a>
-                            <a href="{% url 'edit_portfolio' portfolio.id %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-edit me-1"></i>Edit
-                            </a>
-                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">
-                                <i class="fas fa-trash-alt me-1"></i>Delete
-                            </button>
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Your Portfolios</h2>
+        <a href="{% url 'add_portfolio' %}" class="btn btn-primary mb-3">Add New Portfolio</a>
+        
+        {% if portfolios %}
+            <div class="list-group">
+                {% for portfolio in portfolios %}
+                    {% cache 5 portfolio_item portfolio.id %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ portfolio.name }}</h5>
+                                <p class="mb-1">{{ portfolio.portfolio_assets.count }} assets</p>
+                                <p class="mb-1">Portfolio Value: {{ portfolio.portfolio_value|floatformat:2 }} {{ portfolio.currency }}</p>
+                                <small>Created: {{ portfolio.created_at|date:"Y/m/d" }} | Last updated: {{ portfolio.updated_at|date:"Y/m/d H:i" }}</small>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'portfolio_detail' portfolio.id %}" class="btn btn-outline-primary btn-sm">View</a>
+                                <a href="{% url 'edit_portfolio' portfolio.id %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">Delete</button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Delete Confirmation Modal -->
-                <div class="modal fade" id="deleteModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ portfolio.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel{{ portfolio.id }}">Confirm Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to delete the portfolio "{{ portfolio.name }}"?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <form action="{% url 'delete_portfolio' portfolio.id %}" method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                </form>
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ portfolio.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ portfolio.id }}">Confirm Deletion</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete the portfolio "{{ portfolio.name }}"?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form action="{% url 'delete_portfolio' portfolio.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% endcache %}
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-info-circle me-2"></i>You haven't created any portfolios yet. Click the button above to create your first portfolio!
-        </div>
-    {% endif %}
+                    {% endcache %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>You haven't created any portfolios yet. Click the button above to create your first portfolio!</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
