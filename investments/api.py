@@ -51,7 +51,7 @@ def get_asset_price(symbol):
 def get_exchange_rate(from_currency, to_currency):
     """Fetch the exchange rate for the two currencies"""
     try:
-        response = requests.get(f"https://v6.exchangerate-api.com/v6/9d78c05d8ec5f4fa45392e69/latest/{from_currency}")
+        response = requests.get(f"https://v6.exchangerate-api.com/v6/de473a4d96be40f5eab86210/latest/{from_currency}")
         data = response.json()
         if data['result'] == 'success':
             return Decimal(str(data['conversion_rates'][to_currency]))

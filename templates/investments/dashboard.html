@@ -75,22 +75,45 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script>
-        var userCurrency = '{{ user.default_currency }}';
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script>
+    var userCurrency = '{{ user.default_currency }}';
 
-        // Total Value History Chart
-        var valueHistoryCtx = document.getElementById('valueHistoryChart').getContext('2d');
-        var valueHistoryData = {{ value_history|safe }};
+    // Lazy loading function
+    function lazyLoadChart(elementId, dataUrl, chartFunction) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    fetch(dataUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            chartFunction(elementId, data);
+                        });
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
 
-        new Chart(valueHistoryCtx, {
+        observer.observe(document.getElementById(elementId));
+    }
+
+    // Chart creation functions
+    function createValueHistoryChart(elementId, data) {
+        console.log("Creating value history chart with data:", data);
+        if (!data || data.length === 0) {
+            console.error("No data available for value history chart");
+            return;
+        }
+
+        var ctx = document.getElementById(elementId).getContext('2d');
+        new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [{
                     label: 'Total Value',
-                    data: valueHistoryData.map(item => ({
-                        x: new Date(item.date),
+                    data: data.map(item => ({
+                        x: new Date(item.timestamp),
                         y: item.total_value
                     })),
                     borderColor: '#4BC0C0',
@@ -121,46 +144,19 @@
                 }
             }
         });
+    }
 
-        // Function to calculate percentages
-        function calculatePercentages(data) {
-            const total = data.reduce((sum, value) => sum + value, 0);
-            return data.map(value => ((value / total) * 100).toFixed(2));
-        }
-
-        // Function to update chart tooltips
-        function updateChartTooltips(chart, showValues, values, percentages) {
-            chart.options.plugins.tooltip.callbacks.label = function(context) {
-                let label = context.label || '';
-                if (label) {
-                    label += ': ';
-                }
-                if (showValues) {
-                    label += values[context.dataIndex].toFixed(2) + ' ' + userCurrency;
-                } else {
-                    label += percentages[context.dataIndex] + '%';
-                }
-                return label;
-            };
-            chart.update();
-        }
-
-        // Geographic Distribution Chart
-        var geographicData = JSON.parse('{{ geographic_distribution|safe }}');
-        var labels = geographicData.map(item => item.region);
-        var values = geographicData.map(item => item.total_value);
-        var percentages = calculatePercentages(values);
-
-        var ctx = document.getElementById('geographicDistributionChart').getContext('2d');
-        var myPieChart = new Chart(ctx, {
+    function createGeographicDistributionChart(elementId, data) {
+        var ctx = document.getElementById(elementId).getContext('2d');
+        var chart = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: labels,
+                labels: data.map(item => item.region),
                 datasets: [{
-                    data: values,
+                    data: data.map(item => item.total_value),
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 230, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
                         'rgba(255, 206, 86, 0.8)',
                         'rgba(75, 192, 192, 0.8)',
                         'rgba(153, 102, 255, 0.8)',
@@ -178,9 +174,9 @@
                                     label += ': ';
                                 }
                                 if (document.getElementById('geographicChartSwitch').checked) {
-                                    label += values[context.dataIndex].toFixed(2) + ' ' + userCurrency;
+                                    label += context.parsed.toFixed(2) + ' ' + userCurrency;
                                 } else {
-                                    label += percentages[context.dataIndex] + '%';
+                                    label += ((context.parsed / context.dataset.data.reduce((a, b) => a + b)) * 100).toFixed(2) + '%';
                                 }
                                 return label;
                             }
@@ -197,24 +193,26 @@
             }
         });
 
-        // Event listener to switch between values and percentages
-        document.getElementById('geographicChartSwitch').addEventListener('change', function(e) {
-            myPieChart.update();
+        document.getElementById('geographicChartSwitch').addEventListener('change', function() {
+            chart.update();
         });
+    }
 
-        // Asset Type Chart (Passive vs Aggressive)
-        var assetTypeCtx = document.getElementById('assetTypeChart').getContext('2d');
-        var assetTypeData = {{ asset_types|safe }};
-        var assetTypeValues = assetTypeData.map(item => item.total_value);
-        var assetTypePercentages = calculatePercentages(assetTypeValues);
+    function createAssetTypeChart(elementId, data) {
+        console.log("Creating asset type chart with data:", data);
+        if (!data || data.length === 0) {
+            console.error("No data available for asset type chart");
+            return;
+        }
 
-        var assetTypeChart = new Chart(assetTypeCtx, {
+        var ctx = document.getElementById(elementId).getContext('2d');
+        var chart = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: assetTypeData.map(item => item.category),
+                labels: data.map(item => item.category),
                 datasets: [{
-                    data: assetTypeValues,
-                    backgroundColor: ['#FF6384', '#4A90E2']
+                    data: data.map(item => item.total_value),
+                    backgroundColor: ['#FF6384', '#36A2EB'],
                 }]
             },
             options: {
@@ -227,7 +225,11 @@
                                 if (label) {
                                     label += ': ';
                                 }
-                                label += assetTypePercentages[context.dataIndex] + '%';
+                                if (document.getElementById('assetTypeChartSwitch').checked) {
+                                    label += context.parsed.toFixed(2) + ' ' + userCurrency;
+                                } else {
+                                    label += ((context.parsed / context.dataset.data.reduce((a, b) => a + b)) * 100).toFixed(2) + '%';
+                                }
                                 return label;
                             }
                         }
@@ -243,10 +245,14 @@
             }
         });
 
-        // Event listener to switch between values and percentages
-        document.getElementById('assetTypeChartSwitch').addEventListener('change', function(e) {
-            updateChartTooltips(assetTypeChart, e.target.checked, assetTypeValues, assetTypePercentages);
+        document.getElementById('assetTypeChartSwitch').addEventListener('change', function() {
+            chart.update();
         });
+    }
 
-    </script>
+    // Lazy load charts
+    lazyLoadChart('valueHistoryChart', '{% url "value_history_data" %}', createValueHistoryChart);
+    lazyLoadChart('geographicDistributionChart', '{% url "geographic_distribution_data" %}', createGeographicDistributionChart);
+    lazyLoadChart('assetTypeChart', '{% url "asset_types_data" %}', createAssetTypeChart);
+</script>
 {% endblock %}

@@ -34,8 +34,8 @@ class Asset(models.Model):
 
 
 class PortfolioAsset(models.Model):
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name='portfolio_assets')
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='portfolio_assets')
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name='portfolio_assets', db_index=True)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='portfolio_assets', db_index=True)
     position = models.PositiveIntegerField()  # number of shares/units held
     # target_ratio = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # target position percentage
 

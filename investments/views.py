@@ -4,9 +4,10 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
-from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper, Prefetch, Case, When, Value, CharField
+from django.db.models import Sum, Count, F, FloatField, DecimalField, ExpressionWrapper, Prefetch, Case, When, Value, CharField
 from django.db.models.functions import TruncDate, Cast
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.cache import cache
 from .models import Asset, PortfolioAsset, Portfolio, TotalValueHistory
 from .forms import PortfolioForm
 from .constants import TIMEZONE_TO_REGION
@@ -14,8 +15,9 @@ from . import utils
 from . import api
 import logging
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import date
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -33,119 +35,180 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 # Dashboard view
 @login_required
-def DashboardView(request):
+def dashboard(request):
     user = request.user
-    user_currency = user.default_currency
-
-    # Overall portfolio summary
-    total_value = utils.get_total_value(user)
-    portfolio_count = Portfolio.objects.filter(user=user).count()
-
-    # Total value history
-    value_history = TotalValueHistory.objects.filter(user=user)\
-        .order_by('timestamp')\
-        .annotate(date=TruncDate('timestamp'))\
-        .values('date', 'total_value')
-
-    # Geographic Distribution
-    portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
-    
-    geographic_distribution = {}
-    for portfolio_asset in portfolio_assets:
-        region = next((region for tz, region in TIMEZONE_TO_REGION.items() 
-                       if portfolio_asset.asset.timezone_full_name == tz), 'Other')
-        
-        if portfolio_asset.asset.currency == user_currency:
-            asset_value = portfolio_asset.get_asset_value()
-        else:
-            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
-
-        if asset_value is not None:
-            geographic_distribution[region] = geographic_distribution.get(region, Decimal(0)) + asset_value
-
-    # Convert to list of dictionaries and sort
-    geographic_distribution = [
-        {'region': region, 'total_value': float(value)}
-        for region, value in geographic_distribution.items()
-    ]
-    geographic_distribution.sort(key=lambda x: x['total_value'], reverse=True)
-
-    # Passive vs Aggressive ratio
-    portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
-    
-    asset_types = {
-        'Aggressive': Decimal(0),
-        'Passive': Decimal(0)
-    }
-
-    for portfolio_asset in portfolio_assets:
-        category = 'Aggressive' if portfolio_asset.asset.asset_type in ['STOCK', 'EQUITY'] else 'Passive'
-        if portfolio_asset.asset.currency == user_currency:
-            asset_value = portfolio_asset.get_asset_value()
-        else:
-            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
-        if asset_value is not None:
-            asset_types[category] += asset_value
-
-    # Convert to list of dictionaries
-    asset_types = [
-        {'category': category, 'total_value': float(value)}
-        for category, value in asset_types.items()
-    ]
-
-    # Top 5 assets
-    top_assets_dict = {}
-    for portfolio_asset in portfolio_assets:
-        if portfolio_asset.asset.currency == user_currency:
-            asset_value = portfolio_asset.get_asset_value()
-        else:
-            asset_value = utils.get_asset_value_in_user_currency(portfolio_asset, user)
-        
-        if asset_value is not None:
-            symbol = portfolio_asset.asset.symbol
-            if symbol not in top_assets_dict:
-                top_assets_dict[symbol] = {
-                    'asset__symbol': symbol,
-                    'asset__name': portfolio_asset.asset.name,
-                    'total_value': Decimal('0')
-                }
-            top_assets_dict[symbol]['total_value'] += asset_value
-
-    # Convert to list, sort, and get top 5
-    top_assets = list(top_assets_dict.values())
-    top_assets.sort(key=lambda x: x['total_value'], reverse=True)
-    top_assets = top_assets[:5]
-
-    # Convert Decimal to float for JSON serialization
-    for asset in top_assets:
-        asset['total_value'] = float(asset['total_value'])
-
     context = {
-        'user_currency': user_currency,
-        'total_value': float(total_value),  # Convert Decimal to float
-        'portfolio_count': portfolio_count,
-        'value_history': json.dumps(list(value_history), cls=CustomJSONEncoder),
-        'geographic_distribution': json.dumps(list(geographic_distribution), cls=DjangoJSONEncoder),
-        'asset_types': json.dumps(asset_types, cls=CustomJSONEncoder),
-        'top_assets': top_assets,
+        'total_value': get_total_value(user),
+        'portfolio_count': Portfolio.objects.filter(user=user).count(),
+        'top_assets': get_top_assets(user),
     }
-    # print("Geographic Distribution:", list(geographic_distribution))
-
     return render(request, 'investments/dashboard.html', context)
+
+
+def get_total_value(user):
+    cache_key = f'user_{user.id}_total_value'
+    total_value = cache.get(cache_key)
+    if total_value is None:
+        portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
+        total_value = sum(
+            utils.convert_currency(
+                asset.position * asset.asset.latest_price,
+                asset.asset.currency,
+                user.default_currency
+            )
+            for asset in portfolio_assets
+        )
+        cache.set(cache_key, total_value, 300)  # Cache for 5 minutes
+    return total_value
+
+
+def get_top_assets(user):
+    cache_key = f'user_{user.id}_top_assets'
+    top_assets = cache.get(cache_key)
+    if top_assets is None:
+        portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
+        asset_values = {}
+        for asset in portfolio_assets:
+            value = utils.convert_currency(
+                asset.position * asset.asset.latest_price,
+                asset.asset.currency,
+                user.default_currency
+            )
+            if asset.asset.symbol in asset_values:
+                asset_values[asset.asset.symbol]['total_value'] += value
+            else:
+                asset_values[asset.asset.symbol] = {
+                    'asset__symbol': asset.asset.symbol,
+                    'asset__name': asset.asset.name,
+                    'total_value': value
+                }
+        top_assets = sorted(asset_values.values(), key=lambda x: x['total_value'], reverse=True)[:5]
+        cache.set(cache_key, top_assets, 300)  # Cache for 5 minutes
+    return top_assets
+
+
+def value_history_data(request):
+    user = request.user
+    cache_key = f'user_{user.id}_value_history'
+    data = cache.get(cache_key)
+    if data is None:
+        history = TotalValueHistory.objects.filter(user=user).order_by('timestamp')
+        data = [
+            {
+                'timestamp': entry.timestamp,
+                'total_value': float(entry.total_value)  # Assuming total_value is already in user's default currency
+            }
+            for entry in history
+        ]
+        cache.set(cache_key, data, 3600)  # Cache for 1 hour
+    return JsonResponse(data, safe=False)
+
+
+def geographic_distribution_data(request):
+    user = request.user
+    cache_key = f'user_{user.id}_geographic_distribution'
+    data = cache.get(cache_key)
+
+    if data is None:
+        try:
+            portfolio_assets = PortfolioAsset.objects.filter(portfolio__user=user).select_related('asset')
+            
+            geographic_distribution = {}
+            for portfolio_asset in portfolio_assets:
+                region = next((region for tz, region in TIMEZONE_TO_REGION.items() 
+                               if portfolio_asset.asset.timezone_full_name == tz), 'Other')
+                
+                asset_value = utils.convert_currency(
+                    portfolio_asset.position * portfolio_asset.asset.latest_price,
+                    portfolio_asset.asset.currency,
+                    user.default_currency
+                )
+                geographic_distribution[region] = geographic_distribution.get(region, Decimal(0)) + asset_value
+
+            data = [
+                {'region': region, 'total_value': float(value)}
+                for region, value in geographic_distribution.items()
+            ]
+            data.sort(key=lambda x: x['total_value'], reverse=True)
+
+            cache.set(cache_key, data, 3600)  # Cache for 1 hour
+        except Exception as e:
+            logger.error(f"Error calculating geographic distribution for user {user.id}: {str(e)}")
+            data = []
+
+    return JsonResponse(data, safe=False)
+
+
+def asset_types_data(request):
+    user = request.user
+    cache_key = f'user_{user.id}_asset_types'
+    data = cache.get(cache_key)
+
+    if data is None:
+        try:
+            asset_types = PortfolioAsset.objects.filter(portfolio__user=user)\
+                .select_related('asset')\
+                .annotate(
+                    asset_value=ExpressionWrapper(
+                        F('position') * F('asset__latest_price'),
+                        output_field=DecimalField(max_digits=19, decimal_places=4)
+                    ),
+                    category=Case(
+                        When(asset__asset_type__in=['STOCK', 'EQUITY'], then=Value('Aggressive')),
+                        default=Value('Passive'),
+                        output_field=CharField()
+                    )
+                )\
+                .values('category', 'asset_value', 'asset__currency')
+
+            logger.debug(f"Raw asset types query result: {list(asset_types)}")
+
+            processed_data = {'Aggressive': Decimal('0'), 'Passive': Decimal('0')}
+            for item in asset_types:
+                category = item['category']
+                asset_currency = item['asset__currency']
+                try:
+                    asset_value = Decimal(item['asset_value'] or 0)
+                    converted_value = utils.convert_currency(
+                        asset_value,
+                        asset_currency,
+                        user.default_currency
+                    )
+                    processed_data[category] += converted_value
+                except (InvalidOperation, TypeError) as e:
+                    logger.error(f"Error processing asset value: {e}")
+                    logger.error(f"Problematic item: {item}")
+
+            data = [
+                {'category': category, 'total_value': float(total_value)}
+                for category, total_value in processed_data.items()
+            ]
+
+            logger.debug(f"Processed asset types data: {data}")
+
+            cache.set(cache_key, data, 3600)  # Cache for 1 hour
+        except Exception as e:
+            logger.error(f"Error calculating asset types for user {user.id}: {str(e)}")
+            logger.exception("Full traceback:")
+            data = []
+
+    return JsonResponse(data, safe=False)
 
 
 # List all portfolios
 @login_required
 def list_portfolios(request):
-    portfolios = Portfolio.objects.filter(user=request.user)\
-        .prefetch_related(
-            Prefetch('portfolio_assets', queryset=PortfolioAsset.objects.select_related('asset'))
-        )\
-        .annotate(asset_count=Count('portfolio_assets'))\
-        .order_by('-created_at')
+    cache_key = f'user_{request.user.id}_portfolios'
+    portfolios = cache.get(cache_key)
 
-    for portfolio in portfolios:
-        portfolio.portfolio_value = utils.get_portfolio_value(portfolio)
+    if portfolios is None:
+        portfolios = Portfolio.objects.filter(user=request.user)\
+            .prefetch_related('portfolio_assets__asset')\
+            .annotate(
+                asset_count=Count('portfolio_assets'),
+                portfolio_value=Sum(F('portfolio_assets__position') * F('portfolio_assets__asset__latest_price'))
+            )
+        cache.set(cache_key, portfolios, 300)  # Cache for 5 minutes
 
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
@@ -171,7 +234,15 @@ def add_portfolio(request):
 @require_http_methods(['GET', 'POST', 'DELETE'])
 def portfolio_detail(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
-    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio).select_related('asset').prefetch_related('portfolio')
+
+    portfolio_assets = PortfolioAsset.objects.filter(portfolio=portfolio)\
+        .select_related('asset')\
+        .annotate(
+            market_value=ExpressionWrapper(
+                F('position') * F('asset__latest_price'),
+                output_field=DecimalField(max_digits=19, decimal_places=2)
+            )
+        )
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -218,12 +289,13 @@ def portfolio_detail(request, portfolio_id):
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
     # GET request
-    portfolio_value = utils.get_portfolio_value(portfolio)
+    portfolio_value = portfolio_assets.aggregate(
+        total_value=Sum('market_value')
+    )['total_value'] or 0
 
     # Fetch and display assets details
-    for portfolio_asset in portfolio_assets:
-        portfolio_asset.market_value = portfolio_asset.get_asset_value()
-        portfolio_asset.asset_ratio = utils.get_asset_ratio(portfolio_asset)
+    for asset in portfolio_assets:
+        asset.asset_ratio = (asset.market_value / portfolio_value) * 100 if portfolio_value else 0
             
     context = {
         'portfolio': portfolio,
@@ -282,6 +354,8 @@ def search_assets(request):
     query = request.GET.get('q', '').strip()
     portfolio_id = request.GET.get('portfolio_id')
 
+    print(f"Searching for: {query}")  # Debug print
+
     # Return an empty list if the query is too short
     if len(query) < 3:
         return JsonResponse({'results': []})
@@ -302,6 +376,7 @@ def search_assets(request):
         
         return JsonResponse({'results': results})
     except Exception as e:
+        print(f"Error in search_assets: {e}")  # Debug print
         logger.error(f"Error in search_assets view: {e}")
         return JsonResponse({'results': [{'symbol': 'Error occurred', 'name': '', 'exists_in_portfolio': False}]}, status=500)
 
