@@ -37,11 +37,13 @@ class CustomJSONEncoder(json.JSONEncoder):
 @login_required
 def dashboard(request):
     user = request.user
+    top_assets = get_top_assets(user)
     context = {
         'total_value': get_total_value(user),
         'portfolio_count': Portfolio.objects.filter(user=user).count(),
-        'top_assets': get_top_assets(user),
+        'top_assets': top_assets,
     }
+    # print("Top assets in dashboard view:", top_assets)  # Debug print
     return render(request, 'investments/dashboard.html', context)
 
 
@@ -84,6 +86,11 @@ def get_top_assets(user):
                 }
         top_assets = sorted(asset_values.values(), key=lambda x: x['total_value'], reverse=True)[:5]
         cache.set(cache_key, top_assets, 300)  # Cache for 5 minutes
+    
+    # Convert Decimal to float for JSON serialization
+    for asset in top_assets:
+        asset['total_value'] = float(asset['total_value'])
+    
     return top_assets
 
 
@@ -202,13 +209,28 @@ def list_portfolios(request):
     portfolios = cache.get(cache_key)
 
     if portfolios is None:
-        portfolios = Portfolio.objects.filter(user=request.user)\
-            .prefetch_related('portfolio_assets__asset')\
-            .annotate(
-                asset_count=Count('portfolio_assets'),
-                portfolio_value=Sum(F('portfolio_assets__position') * F('portfolio_assets__asset__latest_price'))
-            )
+        portfolios = list(Portfolio.objects.filter(user=request.user)
+            .prefetch_related('portfolio_assets__asset'))
+        
+        # Update portfolio information
+        for portfolio in portfolios:
+            portfolio.asset_count = portfolio.portfolio_assets.count()
+            portfolio.portfolio_value = utils.get_portfolio_value(portfolio)
+
         cache.set(cache_key, portfolios, 300)  # Cache for 5 minutes
+    else:
+        # Refresh data for cached portfolios
+        for portfolio in portfolios:
+            try:
+                portfolio.refresh_from_db()
+                portfolio.asset_count = portfolio.portfolio_assets.count()
+                portfolio.portfolio_value = utils.get_portfolio_value(portfolio)
+            except Portfolio.DoesNotExist:
+                # Portfolio was deleted, so we don't include it
+                portfolios.remove(portfolio)
+
+        # Update the cache with refreshed data
+        cache.set(cache_key, portfolios, 300)
 
     return render(request, 'investments/portfolios.html', {'portfolios': portfolios})
 
@@ -222,6 +244,9 @@ def add_portfolio(request):
             portfolio = form.save(commit=False)
             portfolio.user = request.user
             portfolio.save()
+            # Invalidate the cache
+            cache_key = f'user_{request.user.id}_portfolios'
+            cache.delete(cache_key)
             messages.success(request, 'Portfolio created successfully.')
             return redirect('list_portfolios')
     else:
@@ -325,12 +350,17 @@ def edit_portfolio(request, portfolio_id):
 @login_required
 def delete_portfolio(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, id=portfolio_id, user=request.user)
+    
     if request.method == 'POST':
         portfolio.delete()
-        # Update the total value history
-        utils.update_total_value_history(request.user)
-
-        return redirect('list_portfolios')  # Redirect to the list of portfolios
+        
+        # Invalidate the cache
+        cache_key = f'user_{request.user.id}_portfolios'
+        cache.delete(cache_key)
+        
+        messages.success(request, 'Portfolio deleted successfully.')
+        return redirect('list_portfolios')
+    
     return render(request, 'investments/delete_portfolio.html', {'portfolio': portfolio})
 
 
