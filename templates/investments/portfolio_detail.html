@@ -1,58 +1,63 @@
 {% extends "base.html" %}
 {% load django_bootstrap5 %}
+{% load cache %}
 
 {% block title %}{{ portfolio.name }} - Portfolio Summary{% endblock %}
 
 {% block content %}
-{% load cache %}
+<div class="portfolio-detail-container">
+    {% cache 5 portfolio_summary portfolio.id %}
+    <h2>Portfolio Summary: {{ portfolio.name }}</h2>
+    <p>Portfolio Value: <span id="portfolioValue" class="portfolio-value">{{ portfolio_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
+    {% endcache %}
 
-{% cache 5 portfolio_summary portfolio.id %}
-<h2>Portfolio Summary: {{ portfolio.name }}</h2>
-<p>Portfolio Value: <span id="portfolioValue">{{ portfolio_value|floatformat:2 }}</span> {{ portfolio.currency }}</p>
-{% endcache %}
-<div class="mb-3">
-    <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
+    <a href="{% url 'add_assets' portfolio.id %}" class="btn btn-primary mb-4">
+        <i class="fas fa-plus-circle me-2"></i>Add New Asset
+    </a>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="flex-grow-1 me-3">
+            <input type="text" id="assetSearch" class="form-control" placeholder="Search assets...">
+        </div>
+        <div>
+            <button id="editBtn" class="btn btn-secondary">Edit</button>
+            <button id="saveBtn" class="btn btn-success" style="display: none;">Save</button>
+            <button id="deleteBtn" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Latest Price</th>
+                <th>Market Value</th>
+                <th>Currency</th>
+                <th>Portfolio Ratio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in portfolio_assets %}
+            <tr data-asset-id="{{ asset.id }}">
+                <td><input type="checkbox" class="asset-select" data-id="{{ asset.id }}"></td>
+                <td>{{ asset.asset.symbol }}</td>
+                <td>{{ asset.asset.name }}</td>
+                <td>
+                    <span class="position-value">{{ asset.position }}</span>
+                    <input type="number" class="form-control position-input" style="display: none;" value="{{ asset.position }}" min="1">
+                </td>
+                <td>{{ asset.asset.latest_price }}</td>
+                <td class="market-value">{{ asset.market_value|floatformat:2 }}</td>
+                <td>{{ asset.asset.currency }}</td>
+                <td class="asset-ratio">{{ asset.asset_ratio|floatformat:2 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
-<div class="mb-3">
-    <a href="{% url 'add_assets' portfolio.id %}" class="btn btn-primary">Add</a>
-    <button id="editBtn" class="btn btn-secondary">Edit</button>
-    <button id="saveBtn" class="btn btn-success" style="display: none;">Save</button>
-    <button id="deleteBtn" class="btn btn-danger">Delete</button>
-</div>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th><input type="checkbox" id="selectAll"></th>
-            <th>Symbol</th>
-            <th>Name</th>
-            <th>Position</th>
-            <th>Latest Price</th>
-            <th>Market Value</th>
-            <th>Currency</th>
-            <th>Portfolio Ratio</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for asset in portfolio_assets %}
-        <tr data-asset-id="{{ asset.id }}">
-            <td><input type="checkbox" class="asset-select" data-id="{{ asset.id }}"></td>
-            <td>{{ asset.asset.symbol }}</td>
-            <td>{{ asset.asset.name }}</td>
-            <td>
-                <span class="position-value">{{ asset.position }}</span>
-                <input type="number" class="form-control position-input" style="display: none;" value="{{ asset.position }}" min="1">
-            </td>
-            <td>{{ asset.asset.latest_price }}</td>
-            <td class="market-value">{{ asset.market_value|floatformat:2 }}</td>
-            <td>{{ asset.asset.currency }}</td>
-            <td class="asset-ratio">{{ asset.asset_ratio|floatformat:2 }}%</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -68,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Save button functionality
     saveBtn.addEventListener('click', handleSave);
+
+    // Delete button functionality
+    deleteBtn.addEventListener('click', handleDelete);
 
     // Search functionality with debounce
     let searchTimeout;
@@ -123,6 +131,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (updatedAssets.length === selectedAssets.length) {
+            // Disable the save button and show loading state
+            saveBtn.disabled = true;
+            const originalSaveBtnText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
             fetch('', {
                 method: 'POST',
                 headers: {
@@ -172,15 +185,24 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred: ' + error.message);
+            })
+            .finally(() => {
+                // Re-enable the save button and restore original text
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalSaveBtnText;
             });
         }
     }
 
-// Delete button functionality
-deleteBtn.addEventListener('click', function() {
+    function handleDelete() {
         const selectedAssets = Array.from(document.querySelectorAll('.asset-select:checked')).map(cb => cb.dataset.id);
         if (selectedAssets.length > 0) {
             if (confirm('Are you sure you want to delete the selected assets from this portfolio?')) {
+                // Disable the delete button and show loading state
+                deleteBtn.disabled = true;
+                const originalDeleteBtnText = deleteBtn.innerHTML;
+                deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
                 fetch('', {
                     method: 'DELETE',
                     headers: {
@@ -222,12 +244,17 @@ deleteBtn.addEventListener('click', function() {
                 .catch(error => {
                     console.error('Error:', error);
                     alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    // Re-enable the delete button and restore original text
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalDeleteBtnText;
                 });
             }
         } else {
             alert('Please select assets to delete');
         }
-    });
+    }
 });
 </script>
 {% endblock %}
