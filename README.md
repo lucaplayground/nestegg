@@ -85,10 +85,6 @@ We use a combination of sans-serif fonts for optimal readability:
 
 ### Dashboard
 <img src="screenshots/dashboard-web.png" alt="Dashboard Web View" width="90%">
-<div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <img src="screenshots/dashboard-tablet.png" alt="Dashboard Tablet View" width="60%" style="margin-right: 20px;">
-    <img src="screenshots/dashboard-mobile.png" alt="Dashboard Mobile View" width="30%">
-</div>
 
 The dashboard provides a clear and comprehensive overview of your investment portfolio. It displays your total portfolio value, asset allocation, geographic distribution, and historical performance. The responsive design ensures a seamless experience across desktop, tablet, and mobile devices.
 
