@@ -21,16 +21,17 @@ NestEgg is ideal for long-term individual investors who aren’t concerned with 
 
 ## Table of Contents
 1. [Key Features](#key-features)
-2. [UI Showcase](#ui-showcase)
-3. [Project Structure](#project-structure)
-4. [Security Measures](#security-measures)
-5. [Setup and Installation](#setup-and-installation)
-6. [Production Environment](#production-environment)
-7. [Usage Guide](#usage-guide)
-8. [Testing with Admin Commands](#testing-with-admin-commands)
-9. [Current Limitations and Future Considerations](#current-limitations-and-future-considerations)
-10. [Contributing](#contributing)
-11. [License](#license)
+2. [UI Design](#ui-design)
+3. [UI Showcase](#ui-showcase)
+4. [Project Structure](#project-structure)
+5. [Security Measures](#security-measures)
+6. [Setup and Installation](#setup-and-installation)
+7. [Production Environment](#production-environment)
+8. [Usage Guide](#usage-guide)
+9. [Testing with Admin Commands](#testing-with-admin-commands)
+10. [Current Limitations and Future Considerations](#current-limitations-and-future-considerations)
+11. [Contributing](#contributing)
+12. [License](#license)
 
 ## Key Features
 1. **Multi-Portfolio Management**: Create and manage multiple investment portfolios, allowing you to organise your investments by strategy, goal, or other criteria.
@@ -47,39 +48,82 @@ NestEgg is ideal for long-term individual investors who aren’t concerned with 
 User-Friendly Interface: Intuitive design makes it easy to navigate and understand your investments at a glance.
 9. **Secure and Private**: Built with security in mind, ensuring your sensitive financial data remains protected.
 
+## UI Design
+
+NestEgg's user interface is designed with a focus on clarity, efficiency, and user-friendliness. Our design philosophy centers around providing a seamless experience for users to manage and analyze their investments.
+
+### Design Principles
+
+1. **Simplicity**: We've adopted a clean, uncluttered design that allows users to focus on their investment data without distractions.
+
+2. **Consistency**: A consistent color scheme, typography, and layout across all pages ensure a cohesive user experience.
+
+3. **Responsiveness**: The UI is designed to be fully responsive, providing an optimal viewing experience across a wide range of devices.
+
+4. **Accessibility**: We've implemented high-contrast colour schemes and clear typography to ensure the app is accessible to users with various visual capabilities.
+
+### Colour Scheme
+
+Colours are carefully chosen to reflect trust, professionalism, and clarity:
+
+- **Primary Blue (#007bff)**: Represents trust and stability, used for primary actions and key information.
+- **Accent Green (#28a745)**: Signifies growth and positive trends, used for highlighting gains.
+- **Alert Red (#dc3545)**: Indicates caution or negative trends, used sparingly for important alerts or losses.
+- **Neutral Gray (#6c757d)**: Provides balance and is used for secondary information and text.
+
+### Typography
+
+We use a combination of sans-serif fonts for optimal readability:
+
+- **Headings**: Roboto, bold weight
+- **Body Text**: Open Sans, regular weight
+
+
 ## UI Showcase
 
 ### Dashboard
-![Dashboard](screenshots/dashboard-web.png)
-![Dashboard Tablet](screenshots/dashboard-tablet.png)
-![Dashboard Mobile](screenshots/dashboard-mobile.png)
+<div style="display: flex; justify-content: space-between;">
+    <img src="screenshots/dashboard_web.png" alt="Dashboard Web View" width="30%">
+    <img src="screenshots/dashboard_tablet.png" alt="Dashboard Tablet View" width="30%">
+    <img src="screenshots/dashboard_mobile.png" alt="Dashboard Mobile View" width="30%">
+</div>
+
+The dashboard provides a clear and comprehensive overview of your investment portfolio. It displays your total portfolio value, asset allocation, geographic distribution, and historical performance. The responsive design ensures a seamless experience across desktop, tablet, and mobile devices.
 
 ### Portfolio View
-![Portfolio View](screenshots/portfolios-web.png)
+<img src="screenshots/portfolios-web.png" alt="Portfolio View" width="90%">
+
+The portfolio view offers a detailed breakdown of individual portfolios. Users can see the assets within each portfolio, their current values, performance metrics, and allocation percentages. 
 
 ### Asset Management
-![Asset Management](screenshots/portfolio-summary-web.png)
+<img src="screenshots/portfolio-summary-web.png" alt="Asset Management" width="90%">
+
+The asset management page enables users to add, edit, or remove assets from their portfolios. 
+
+### Add Assets
+<img src="screenshots/add-assets-web.png" alt="Add Assets" width="90%">
+
+The Add Assets page integrates with the Yahoo Finance API to allow users to search for assets by name or ticker symbol, add assets to their portoflios, and adjust positions of assets.
 
 ## Project Structure
 
 NestEgg follows a typical Django project structure with some custom applications:
-
+```
 nestegg/
-├── backend/ # Main Django project directory
-│ ├── settings.py # Project settings
-│ ├── urls.py # Main URL configuration
-│ └── wsgi.py # WSGI application entry point
-├── accounts/ # Custom user authentication app
-│ ├── models.py # Custom user model
-│ └── views.py # User-related views
-├── investments/ # Core investment tracking app
-│ ├── models.py # Portfolio and Asset models
-│ ├── views.py # Investment-related views
-│ └── utils.py # Utility functions for investments
-├── static/ # Static files (CSS, JS, images)
-├── templates/ # HTML templates
-├── manage.py # Django's command-line utility
-└── requirements.txt # Project dependencies
+    |-- backend/ # Main Django project directory
+
+    |-- accounts/ # Custom user authentication app
+
+    |-- investments/ # Core investment tracking app
+
+    |-- static/ # Static files (CSS, JS, images)
+
+    |-- templates/ # HTML templates
+
+    |-- manage.py # Django's command-line utility
+
+    |-- requirements.txt # Project dependencies
+```
 
 - The `backend` directory contains the main Django project settings and configurations.
 - `accounts` handles user authentication and profiles.
