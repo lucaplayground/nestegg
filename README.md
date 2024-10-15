@@ -1,7 +1,7 @@
 # NestEgg: Your Personal Investment Portfolio Tracker
 
 <p align="left">
-    <a href="https://github.com/abeltavares/StockTracker](https://github.com/lucaplayground/nestegg">
+    <a href="https://github.com/lucaplayground/nestegg](https://github.com/lucaplayground/nestegg">
         <img src="https://img.shields.io/badge/GitHub-Repository-blue?logo=github" alt="GitHub Repository">
     </a>
     <a href="https://www.djangoproject.com/">
@@ -83,9 +83,9 @@ We use a combination of sans-serif fonts for optimal readability:
 
 ### Dashboard
 <div style="display: flex; justify-content: space-between;">
-    <img src="screenshots/dashboard_web.png" alt="Dashboard Web View" width="30%">
-    <img src="screenshots/dashboard_tablet.png" alt="Dashboard Tablet View" width="30%">
-    <img src="screenshots/dashboard_mobile.png" alt="Dashboard Mobile View" width="30%">
+    <img src="screenshots/dashboard-web.png" alt="Dashboard Web View" width="30%">
+    <img src="screenshots/dashboard-tablet.png" alt="Dashboard Tablet View" width="30%">
+    <img src="screenshots/dashboard-mobile.png" alt="Dashboard Mobile View" width="30%">
 </div>
 
 The dashboard provides a clear and comprehensive overview of your investment portfolio. It displays your total portfolio value, asset allocation, geographic distribution, and historical performance. The responsive design ensures a seamless experience across desktop, tablet, and mobile devices.
