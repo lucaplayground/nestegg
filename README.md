@@ -25,8 +25,8 @@ NestEgg is ideal for long-term individual investors who aren’t concerned with 
 3. [Project Structure](#project-structure)
 4. [Security Measures](#security-measures)
 5. [Setup and Installation](#setup-and-installation)
-6. [Usage Guide](#usage-guide)
-7. [Production Environment](#production-environment)
+6. [Production Environment](#production-environment)
+7. [Usage Guide](#usage-guide)
 8. [Testing with Admin Commands](#testing-with-admin-commands)
 9. [Current Limitations and Future Considerations](#current-limitations-and-future-considerations)
 10. [Contributing](#contributing)
@@ -50,37 +50,35 @@ User-Friendly Interface: Intuitive design makes it easy to navigate and understa
 ## UI Showcase
 
 ### Dashboard
+![Dashboard](screenshots/dashboard-web.png)
+![Dashboard Tablet](screenshots/dashboard-tablet.png)
+![Dashboard Mobile](screenshots/dashboard-mobile.png)
 
 ### Portfolio View
+![Portfolio View](screenshots/portfolios-web.png)
 
 ### Asset Management
+![Asset Management](screenshots/portfolio-summary-web.png)
 
 ## Project Structure
 
 NestEgg follows a typical Django project structure with some custom applications:
 
 nestegg/
-│
 ├── backend/ # Main Django project directory
 │ ├── settings.py # Project settings
 │ ├── urls.py # Main URL configuration
 │ └── wsgi.py # WSGI application entry point
-│
 ├── accounts/ # Custom user authentication app
 │ ├── models.py # Custom user model
 │ └── views.py # User-related views
-│
 ├── investments/ # Core investment tracking app
 │ ├── models.py # Portfolio and Asset models
 │ ├── views.py # Investment-related views
 │ └── utils.py # Utility functions for investments
-│
 ├── static/ # Static files (CSS, JS, images)
-│
 ├── templates/ # HTML templates
-│
 ├── manage.py # Django's command-line utility
-│
 └── requirements.txt # Project dependencies
 
 - The `backend` directory contains the main Django project settings and configurations.
@@ -199,6 +197,68 @@ NestEgg includes custom Django admin commands to facilitate testing and data pop
    ```
 
 This command creates a test user, portfolios, and assets, allowing you to quickly set up a testing environment.
+
+## Usage Guide
+### Getting Started
+
+1. **Registration**: 
+   - Navigate to the registration page and create an account.
+   - Choose your default currency during registration.
+
+2. **Login**: 
+   - Use your credentials to log in to your account.
+
+### Managing Portfolios
+
+1. **Create a Portfolio**:
+   - From the dashboard, click on "Create New Portfolio".
+   - Enter a name for your portfolio and select the currency.
+
+2. **View Portfolios**:
+   - Access the "My Portfolios" page to see an overview of all your portfolios.
+
+3. **Portfolio Details**:
+   - Click on a portfolio name to view its details, including assets and performance.
+
+### Managing Assets
+
+1. **Add Assets**:
+   - In a portfolio, click "Add Asset".
+   - Search for an asset by name or ticker symbol.
+   - Enter the quantity and purchase details.
+
+2. **Update Asset Positions**:
+   - In the portfolio details, find the asset you want to update.
+   - Click "Edit" and modify the quantity or other details.
+
+3. **Remove Assets**:
+   - In the portfolio details, select the assets you want to remove.
+   - Click "Delete Selected" to remove them from your portfolio.
+
+### Tracking Performance
+
+1. **Dashboard Overview**:
+   - The main dashboard shows your total portfolio value and performance over time.
+
+2. **Portfolio Performance**:
+   - In each portfolio's detail page, view individual asset performance and overall portfolio metrics.
+
+3. **Asset Distribution**:
+   - Check the "Geographic Distribution" and "Asset Type" charts on the dashboard for insights into your investment spread.
+
+### Account Management
+
+1. **Update Profile**:
+   - Access your profile settings to update personal information or change your password.
+
+2. **Change Default Currency**:
+   - In profile settings, you can change your default display currency.
+   - Note: This doesn't convert existing assets but affects new additions and overall display.
+
+### Using the Mobile Version
+
+- While fully functional on desktop, some tables may not display optimally on smaller screens.
+- Use landscape mode on mobile devices for better viewing of detailed tables.
 
 
 ## Current Limitations and Future Considerations
