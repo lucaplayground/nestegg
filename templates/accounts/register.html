@@ -40,8 +40,10 @@
                         I have read and agree to the <a href="{% url 'terms_and_conditions' %}" target="_blank">terms and conditions</a> and privacy policy.
                     </label>
                 </div>
-                <button type="submit" class="btn btn-primary">Sign up</button>
-                <a href="{% url 'login' %}" class="btn btn-secondary">Cancel</a>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Sign up</button>
+                    <a href="{% url 'login' %}" class="btn btn-secondary">Cancel</a>
+                </div>
             </form>
         </div>
     </div>

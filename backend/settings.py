@@ -154,7 +154,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 # authentication settings
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'  # redirect to dashboard page after login
+LOGIN_REDIRECT_URL = 'dashboard'  # redirect to home page after login
 LOGOUT_REDIRECT_URL = 'login'  # redirect to login page after logout
 
 # update REST framework configuration

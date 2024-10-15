@@ -17,8 +17,11 @@
         <form method="post" onsubmit="return validateLoginForm()">
             {% csrf_token %}
             {% bootstrap_form form %}
-            <button type="submit" class="btn btn-primary">Login</button>
-            <a href="{% url 'register' %}" class="btn btn-secondary">Sign up</a>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Login</button>
+                <a href="{% url 'register' %}" class="btn btn-secondary">Sign up</a>
+            </div>
+            
         </form>
     </div>
 {% endblock %}
