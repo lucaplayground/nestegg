@@ -168,6 +168,9 @@ REST_FRAMEWORK = {
     ),
 }
 
+# exchange API configuration
+EXCHANGE_API_KEY = env('EXCHANGE_API_KEY')
+
 # add cors headers configuration
 CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in development
 CORS_ALLOW_CREDENTIALS = True  # Allow credentials in development
