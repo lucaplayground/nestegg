@@ -64,7 +64,9 @@ NestEgg's user interface is designed with a focus on clarity, efficiency, and us
 
 ### Colour Scheme
 
-Colours are carefully chosen to reflect trust, professionalism, and clarity:
+<img src="screenshots/colour-palette.png" alt="Colour Palette" width="80%">
+
+The colour plaette are carefully chosen to reflect trust, professionalism, and clarity:
 
 - **Primary Blue (#007bff)**: Represents trust and stability, used for primary actions and key information.
 - **Accent Green (#28a745)**: Signifies growth and positive trends, used for highlighting gains.
@@ -82,9 +84,9 @@ We use a combination of sans-serif fonts for optimal readability:
 ## UI Showcase
 
 ### Dashboard
-<div style="display: flex; justify-content: space-between;">
-    <img src="screenshots/dashboard-web.png" alt="Dashboard Web View" width="30%">
-    <img src="screenshots/dashboard-tablet.png" alt="Dashboard Tablet View" width="30%">
+<img src="screenshots/dashboard-web.png" alt="Dashboard Web View" width="90%">
+<div style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <img src="screenshots/dashboard-tablet.png" alt="Dashboard Tablet View" width="60%" style="margin-right: 20px;">
     <img src="screenshots/dashboard-mobile.png" alt="Dashboard Mobile View" width="30%">
 </div>
 
