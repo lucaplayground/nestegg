@@ -1,7 +1,7 @@
 # NestEgg: Your Personal Investment Portfolio Tracker
 
 <p align="left">
-    <a href="https://github.com/lucaplayground/nestegg](https://github.com/lucaplayground/nestegg">
+    <a href="https://github.com/lucaplayground/nestegg">
         <img src="https://img.shields.io/badge/GitHub-Repository-blue?logo=github" alt="GitHub Repository">
     </a>
     <a href="https://www.djangoproject.com/">
