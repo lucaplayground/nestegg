@@ -3,6 +3,7 @@ import logging
 import requests
 from decimal import Decimal
 from typing import List, Dict
+from django.conf import settings
 
 # This file contains all the API-related functions
 
@@ -51,7 +52,7 @@ def get_asset_price(symbol):
 def get_exchange_rate(from_currency, to_currency):
     """Fetch the exchange rate for the two currencies"""
     try:
-        response = requests.get(f"https://v6.exchangerate-api.com/v6/de473a4d96be40f5eab86210/latest/{from_currency}")
+        response = requests.get(f"https://v6.exchangerate-api.com/v6/{settings.EXCHANGE_API_KEY}/latest/{from_currency}")
         data = response.json()
         if data['result'] == 'success':
             return Decimal(str(data['conversion_rates'][to_currency]))
