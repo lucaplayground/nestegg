@@ -139,6 +139,8 @@ def geographic_distribution_data(request):
             data.sort(key=lambda x: x['total_value'], reverse=True)
 
             cache.set(cache_key, data, 3600)  # Cache for 1 hour
+            
+            logger.debug(f"Geographic distribution data for user {user.id}: {data}")
         except Exception as e:
             logger.error(f"Error calculating geographic distribution for user {user.id}: {str(e)}")
             data = []
@@ -168,7 +170,7 @@ def asset_types_data(request):
                 )\
                 .values('category', 'asset_value', 'asset__currency')
 
-            logger.debug(f"Raw asset types query result: {list(asset_types)}")
+            logger.debug(f"Raw asset types query result for user {user.id}: {list(asset_types)}")
 
             processed_data = {'Aggressive': Decimal('0'), 'Passive': Decimal('0')}
             for item in asset_types:
@@ -183,7 +185,7 @@ def asset_types_data(request):
                     )
                     processed_data[category] += converted_value
                 except (InvalidOperation, TypeError) as e:
-                    logger.error(f"Error processing asset value: {e}")
+                    logger.error(f"Error processing asset value for user {user.id}: {e}")
                     logger.error(f"Problematic item: {item}")
 
             data = [
@@ -191,7 +193,7 @@ def asset_types_data(request):
                 for category, total_value in processed_data.items()
             ]
 
-            logger.debug(f"Processed asset types data: {data}")
+            logger.debug(f"Processed asset types data for user {user.id}: {data}")
 
             cache.set(cache_key, data, 3600)  # Cache for 1 hour
         except Exception as e:
@@ -314,14 +316,18 @@ def portfolio_detail(request, portfolio_id):
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
     # GET request
-    portfolio_value = portfolio_assets.aggregate(
-        total_value=Sum('market_value')
-    )['total_value'] or 0
+    portfolio_value = utils.get_portfolio_value(portfolio)
 
-    # Fetch and display assets details
     for asset in portfolio_assets:
-        asset.asset_ratio = (asset.market_value / portfolio_value) * 100 if portfolio_value else 0
-            
+        # Convert asset market value to portfolio currency
+        asset_value_in_portfolio_currency = utils.convert_currency(
+            asset.market_value,
+            asset.asset.currency,
+            portfolio.currency
+        )
+        asset.market_value_in_portfolio_currency = asset_value_in_portfolio_currency
+        asset.asset_ratio = (asset_value_in_portfolio_currency / portfolio_value) * 100 if portfolio_value else 0
+
     context = {
         'portfolio': portfolio,
         'portfolio_assets': portfolio_assets,
