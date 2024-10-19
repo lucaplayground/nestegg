@@ -83,6 +83,13 @@ We use a combination of sans-serif fonts for optimal readability:
 
 ## UI Showcase
 
+### Registration
+<img src="screenshots/registration-web.png" alt="Registration View" width="90%">
+
+
+### Login
+<img src="screenshots/login-web.png" alt="Login View" width="90%">
+
 ### Dashboard
 <img src="screenshots/dashboard-web.png" alt="Dashboard Web View" width="90%">
 
