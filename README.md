@@ -316,13 +316,11 @@ While NestEgg provides robust functionality for tracking investments, there are 
 
 1. **Mobile Responsiveness**: Some pages with tables, such as the 'Add Assets' page, don't render optimally on small screens. Future updates will focus on improving the mobile experience.
 
-2. **Currency Changes**: If a user changes their default currency, this change is not retroactively applied to the TotalValueHistory. In future versions, we plan to implement a currency conversion feature for historical data.
+2. **Limited Historical Data**: Total Value History model doesn’t have a currency field, which can cause confusion if the user changes their default currency over time. A currency conversion feature for historical data is planned to implement in future release.
 
 3. **Asset Coverage**: Currently, NestEgg only supports assets available on Yahoo Finance. We're exploring options to expand our asset coverage in future releases.
 
-4. **Real-time Updates**: Asset prices are updated periodically rather than in real-time. Future versions may include more frequent or real-time price updates.
-
-5. **Rate Limiting**: The application currently lacks rate limiting, which could make it vulnerable to abuse. Implementing rate limiting is a priority for future security enhancements.
+4. **Rate Limiting**: The application currently lacks rate limiting, which could make it vulnerable to abuse. Implementing rate limiting is a priority for future security enhancements.
 
 
 ## Contributing
