@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from .forms import CustomUserCreationForm, LoginForm, UserProfileForm, CustomPasswordChangeForm
 from .models import CustomUser
 import re
+from django.db import IntegrityError
 
 
 
@@ -26,6 +27,11 @@ class TestCustomUserModel:
     def test_default_currency(self):
         user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123', default_currency='CNY')
         assert user.default_currency == 'CNY'
+    
+    def test_unique_email(self):
+        User.objects.create_user(username='user1', email='test@example.com', password='password123')
+        with pytest.raises(IntegrityError):
+            User.objects.create_user(username='user2', email='test@example.com', password='password456')
 
 
 # Form Tests
