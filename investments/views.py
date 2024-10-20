@@ -456,7 +456,7 @@ def add_assets(request, portfolio_id):
 
                 # Create or update the asset
                 asset = utils.create_asset(symbol)
-                print(asset)
+                # print(asset)
                 if not asset:
                     logger.warning(f"Failed to create asset for symbol: {symbol}")
                     continue
