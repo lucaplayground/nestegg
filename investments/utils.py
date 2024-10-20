@@ -178,3 +178,38 @@ def update_total_value_history(user):
         else:
             # Create a new entry if one doesn't exist for today
             TotalValueHistory.objects.create(user=user, total_value=total_value, timestamp=timezone.now())
+
+
+def update_all_assets():
+    """Update the latest price for all existing assets in the database"""
+    assets = Asset.objects.all()
+    updated_count = 0
+    failed_count = 0
+
+    # Get all asset symbols
+    symbols = list(assets.values_list('symbol', flat=True))
+
+    # Fetch data for all symbols in one API call
+    asset_data = api.get_asset_data(symbols)
+
+    for asset in assets:
+        if asset.symbol in asset_data:
+            data = asset_data[asset.symbol]
+            try:
+                asset.latest_price = data.get('latest_price')
+                asset.name = data.get('name') or data.get('long_name', asset.name)
+                asset.asset_type = data.get('asset_type', asset.asset_type)
+                asset.currency = data.get('currency', asset.currency)
+                asset.timezone_full_name = data.get('timezone_full_name', asset.timezone_full_name)
+                asset.timezone_short_name = data.get('timezone_short_name', asset.timezone_short_name)
+                asset.save()
+                updated_count += 1
+                logger.info(f"Updated asset: {asset.name} ({asset.symbol})")
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"Error updating asset {asset.symbol}: {e}")
+        else:
+            failed_count += 1
+            logger.error(f"No data returned for symbol: {asset.symbol}")
+
+    return updated_count, failed_count
