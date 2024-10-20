@@ -131,7 +131,7 @@ class TestUtils:
 # API Tests
 @pytest.mark.django_db
 class TestAPIIntegration:
-    @patch('investments.api.yf.Tickers')  # Note: Changed from Ticker to Tickers
+    @patch('investments.api.yf.Tickers')
     def test_get_asset_data(self, mock_tickers):
         mock_ticker = mock_tickers.return_value.tickers['AAPL']
         mock_ticker.info = {
@@ -145,7 +145,7 @@ class TestAPIIntegration:
         data = api.get_asset_data(['AAPL'])
         assert 'AAPL' in data
         assert data['AAPL']['name'] == 'Apple Inc.'
-        assert data['AAPL']['latest_price'] == 235.0  # Updated expected value
+        assert data['AAPL']['latest_price'] == 235.0
         assert data['AAPL']['asset_type'] == 'EQUITY'
         assert data['AAPL']['currency'] == 'USD'
 
